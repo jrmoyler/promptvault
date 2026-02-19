@@ -38,7 +38,7 @@ function StatsStrip() {
   return (
     <div className="grid grid-cols-3 gap-2 sm:gap-3 mx-3 sm:mx-6 mt-4 sm:mt-6 mb-2">
       {[
-        { value: "5,010+", label: "Total Prompts", icon: "⚡" },
+        { value: "5,022+", label: "Total Prompts", icon: "⚡" },
         { value: "38",     label: "AI Tools",       icon: "🤖" },
         { value: "24",     label: "Categories",     icon: "📂" },
       ].map(({ value, label, icon }) => (
