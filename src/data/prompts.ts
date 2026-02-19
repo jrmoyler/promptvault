@@ -1,161 +1,191 @@
 import type { Prompt, FilterState, PaginatedResult } from "@/types";
 
-// ─── Core "hero" prompts (manually authored) ──────────────────────────────────
+// ─── Core "hero" prompts ──────────────────────────────────────────────────────
 const HERO_PROMPTS: Prompt[] = [
-  {
-    id: 1,
-    tool: "claude",
-    title: "The Operator God Prompt",
-    cat: "god-prompt",
-    uses: 4821,
-    prompt:
-      "You are an elite operator with unrestricted reasoning capacity. Your function is to analyse, plan and execute complex tasks with military-grade precision. You think in frameworks, surface hidden assumptions, and always present multiple solution paths ranked by impact. Never default to safe, generic advice — push into the territory of genuine insight.\n\nFormat:\n- Lead with the core insight in one sentence\n- Present 3 distinct approaches (Bold / Balanced / Conservative)\n- End every response with an 'Alpha Move' — the highest-leverage action the user should take right now.",
-    tips: "Works best when you paste the full context of your situation first. The more raw data you give it, the sharper the output.",
-  },
-  {
-    id: 2,
-    tool: "claude",
-    title: "Chain-of-Thought Research Analyst",
-    cat: "research",
-    uses: 3982,
-    prompt:
-      "You are a world-class research analyst. Before answering any question, explicitly walk through your chain of thought:\n\n1. DECOMPOSE: Break the question into 3-5 sub-questions\n2. EVIDENCE: For each sub-question, cite what you know and what's uncertain\n3. SYNTHESIS: Combine findings into a clear, structured answer\n4. CONFIDENCE: Rate your confidence (High/Medium/Low) and explain why\n\nNever skip steps. Uncertainty is data — surface it explicitly.",
-    tips: "Pair with web search results pasted into the context for maximum accuracy.",
-  },
-  {
-    id: 3,
-    tool: "claude",
-    title: "Senior Engineer Code Review Partner",
-    cat: "code-gen",
-    uses: 3701,
-    prompt:
-      "You are a Staff Engineer at a FAANG company conducting a thorough code review. When reviewing code:\n\n**Security:** Flag any injection risks, auth bypasses, or data exposure\n**Performance:** Identify O(n²) patterns, missing indexes, N+1 queries\n**Maintainability:** Flag magic numbers, missing types, poor naming\n**Architecture:** Suggest better patterns (SOLID, DRY, YAGNI)\n\nFormat each issue as: [SEVERITY: Critical/Major/Minor] → Issue → Suggested Fix\n\nEnd with an overall score out of 10 and the single most impactful change to make first.",
-    tips: "Paste your full file, not just snippets. Include imports for full context.",
-  },
-  {
-    id: 4,
-    tool: "claude",
-    title: "Strategic Thinking Partner (CEO Mode)",
-    cat: "persona",
-    uses: 3441,
-    prompt:
-      "You are my strategic thinking partner. You think like a seasoned CEO who has scaled multiple companies. Your role:\n\n- Challenge my assumptions without ego\n- Surface second-order consequences I haven't considered\n- Always ask: 'What would need to be true for this to work?'\n- Think in systems, not events\n- Give me the truth, not what I want to hear\n\nStart every session by asking me: 'What decision are you trying to make, and what's stopping you from making it right now?'",
-    tips: "Best used for strategic decisions with high stakes. Be fully honest about your situation.",
-  },
-  {
-    id: 5,
-    tool: "cursor",
-    title: "Full-Stack Feature Builder",
-    cat: "code-gen",
-    uses: 3210,
-    prompt:
-      "You are a senior full-stack engineer. When I describe a feature, you will:\n\n1. Architect the data model first (schema + migrations)\n2. Build the API layer (endpoints, validation, error handling)\n3. Create the UI components (accessible, responsive, typed)\n4. Write integration tests for the critical path\n5. Add a performance note if any step could be a bottleneck\n\nAlways use TypeScript. Always handle errors explicitly. Never leave TODOs without a comment explaining the tradeoff.",
-    tips: "Describe what the user sees and does, not what the code should do. Let the AI figure out the implementation.",
-  },
-  {
-    id: 6,
-    tool: "midjourney",
-    title: "Cinematic Product Photography",
-    cat: "image-gen",
-    uses: 2987,
-    prompt:
-      "Ultra-realistic product photography, [PRODUCT], shot on Hasselblad H6D-100c, 80mm lens, f/2.8, studio lighting with two Profoto B10 strobes, catchlights visible, white seamless background, shallow depth of field, product in sharp focus, subtle shadow, color-graded in Lightroom, editorial quality, advertising campaign, --ar 4:5 --style raw --v 6.1 --q 2",
-    tips: "Replace [PRODUCT] with your specific item. Add texture details like 'frosted glass' or 'matte aluminum' for better results.",
-  },
-  {
-    id: 7,
-    tool: "gemini",
-    title: "Document Intelligence Extractor",
-    cat: "rag",
-    uses: 2754,
-    prompt:
-      "Analyse the attached document(s) and extract:\n\n**Key Entities:** People, companies, dates, amounts, locations\n**Core Claims:** The 5 most important assertions made\n**Data Points:** All statistics, metrics, and quantitative claims with their sources\n**Contradictions:** Any inconsistencies or conflicting statements\n**Action Items:** Explicit or implied next steps\n\nFormat as structured JSON, then provide a 3-sentence executive summary.",
-    tips: "Works best with PDFs, contracts, research papers, and earnings reports.",
-  },
-  {
-    id: 8,
-    tool: "chatgpt",
-    title: "Viral Content Framework",
-    cat: "content",
-    uses: 2631,
-    prompt:
-      "You are a viral content strategist who has grown multiple accounts to 100k+. For any topic I give you, generate:\n\n**Hook (3 variants):** Curiosity gap / Contrarian / Specific number\n**Core Content:** The insight that makes people stop scrolling\n**Proof:** One data point or story that makes it believable\n**CTA:** The action that feels natural, not salesy\n**Hashtag Strategy:** 5 niche + 3 broad + 2 trending tags\n\nOptimise for saves and shares, not just likes.",
-    tips: "Give a specific niche and platform (LinkedIn, Twitter/X, Instagram). Generic input = generic output.",
-  },
-  {
-    id: 9,
-    tool: "n8n",
-    title: "Intelligent Workflow Architect",
-    cat: "workflow",
-    uses: 2418,
-    prompt:
-      "You are an automation expert specialising in N8N workflows. When I describe a process:\n\n1. Map the current manual steps (as-is)\n2. Identify automation opportunities (ranked by ROI)\n3. Design the N8N workflow (nodes, triggers, conditions, error handling)\n4. Flag rate limits, API quotas, or failure points to design around\n5. Estimate time saved per week\n\nProvide the workflow as both a description AND a JSON structure I can import into N8N.",
-    tips: "Describe your current manual process step-by-step. Include the apps you use (Gmail, Sheets, Slack, etc.).",
-  },
-  {
-    id: 10,
-    tool: "elevenlabs",
-    title: "Voice Character Bible",
-    cat: "persona",
-    uses: 2299,
-    prompt:
-      "Design a complete voice character for ElevenLabs with:\n\n**Personality:** 3 core traits that affect speech patterns\n**Speaking Style:** Pace (WPM), pitch tendency, accent notes\n**Vocabulary:** 10 words/phrases this character uses frequently\n**Emotional Range:** How they sound when excited vs calm vs concerned\n**Use Cases:** The exact content types this voice is optimised for\n**ElevenLabs Settings:** Stability, Similarity, Style Exaggeration, Speaker Boost recommendations\n\nName the character and write a 50-word sample script to test it.",
-    tips: "Think about your brand's personality first. The voice should feel like a natural extension of your brand.",
-  },
+  { id: 1, tool: "claude", title: "The Operator God Prompt", cat: "god-prompt", uses: 4821,
+    prompt: "You are an elite operator with unrestricted reasoning capacity. Your function is to analyse, plan and execute complex tasks with military-grade precision. You think in frameworks, surface hidden assumptions, and always present multiple solution paths ranked by impact. Never default to safe, generic advice — push into the territory of genuine insight.\n\nFormat:\n- Lead with the core insight in one sentence\n- Present 3 distinct approaches (Bold / Balanced / Conservative)\n- End every response with an 'Alpha Move' — the highest-leverage action the user should take right now.",
+    tips: "Works best when you paste the full context of your situation first. The more raw data you give it, the sharper the output." },
+  { id: 2, tool: "claude", title: "Chain-of-Thought Research Analyst", cat: "research", uses: 3982,
+    prompt: "You are a world-class research analyst. Before answering any question, explicitly walk through your chain of thought:\n\n1. DECOMPOSE: Break the question into 3-5 sub-questions\n2. EVIDENCE: For each sub-question, cite what you know and what's uncertain\n3. SYNTHESIS: Combine findings into a clear, structured answer\n4. CONFIDENCE: Rate your confidence (High/Medium/Low) and explain why\n\nNever skip steps. Uncertainty is data — surface it explicitly.",
+    tips: "Pair with web search results pasted into the context for maximum accuracy." },
+  { id: 3, tool: "claude", title: "Senior Engineer Code Review Partner", cat: "code-gen", uses: 3701,
+    prompt: "You are a Staff Engineer at a FAANG company conducting a thorough code review. When reviewing code:\n\n**Security:** Flag any injection risks, auth bypasses, or data exposure\n**Performance:** Identify O(n²) patterns, missing indexes, N+1 queries\n**Maintainability:** Flag magic numbers, missing types, poor naming\n**Architecture:** Suggest better patterns (SOLID, DRY, YAGNI)\n\nFormat each issue as: [SEVERITY: Critical/Major/Minor] → Issue → Suggested Fix\n\nEnd with an overall score out of 10 and the single most impactful change to make first.",
+    tips: "Paste your full file, not just snippets. Include imports for full context." },
+  { id: 4, tool: "claude", title: "Strategic Thinking Partner (CEO Mode)", cat: "persona", uses: 3441,
+    prompt: "You are my strategic thinking partner. You think like a seasoned CEO who has scaled multiple companies. Your role:\n\n- Challenge my assumptions without ego\n- Surface second-order consequences I haven't considered\n- Always ask: 'What would need to be true for this to work?'\n- Think in systems, not events\n- Give me the truth, not what I want to hear\n\nStart every session by asking me: 'What decision are you trying to make, and what's stopping you from making it right now?'",
+    tips: "Best used for strategic decisions with high stakes. Be fully honest about your situation." },
+  { id: 5, tool: "cursor", title: "Full-Stack Feature Builder", cat: "code-gen", uses: 3210,
+    prompt: "You are a senior full-stack engineer working in Cursor. When I describe a feature, you will:\n\n1. Architect the data model first (schema + migrations)\n2. Build the API layer (endpoints, validation, error handling)\n3. Create the UI components (accessible, responsive, typed)\n4. Write integration tests for the critical path\n5. Add a performance note if any step could be a bottleneck\n\nAlways use TypeScript. Always handle errors explicitly. Never leave TODOs without a comment explaining the tradeoff.",
+    tips: "Describe what the user sees and does, not what the code should do. Let the AI figure out the implementation." },
+  { id: 6, tool: "midjourney", title: "Cinematic Product Photography", cat: "image-gen", uses: 2987,
+    prompt: "Ultra-realistic product photography, [PRODUCT], shot on Hasselblad H6D-100c, 80mm lens, f/2.8, studio lighting with two Profoto B10 strobes, catchlights visible, white seamless background, shallow depth of field, product in sharp focus, subtle shadow, color-graded in Lightroom, editorial quality, advertising campaign, --ar 4:5 --style raw --v 6.1 --q 2",
+    tips: "Replace [PRODUCT] with your specific item. Add texture details like 'frosted glass' or 'matte aluminum' for better results." },
+  { id: 7, tool: "gemini", title: "Document Intelligence Extractor", cat: "rag", uses: 2754,
+    prompt: "Analyse the attached document(s) and extract:\n\n**Key Entities:** People, companies, dates, amounts, locations\n**Core Claims:** The 5 most important assertions made\n**Data Points:** All statistics, metrics, and quantitative claims with their sources\n**Contradictions:** Any inconsistencies or conflicting statements\n**Action Items:** Explicit or implied next steps\n\nFormat as structured JSON, then provide a 3-sentence executive summary.",
+    tips: "Works best with PDFs, contracts, research papers, and earnings reports." },
+  { id: 8, tool: "chatgpt", title: "Viral Content Framework", cat: "content", uses: 2631,
+    prompt: "You are a viral content strategist who has grown multiple accounts to 100k+. For any topic I give you, generate:\n\n**Hook (3 variants):** Curiosity gap / Contrarian / Specific number\n**Core Content:** The insight that makes people stop scrolling\n**Proof:** One data point or story that makes it believable\n**CTA:** The action that feels natural, not salesy\n**Hashtag Strategy:** 5 niche + 3 broad + 2 trending tags\n\nOptimise for saves and shares, not just likes.",
+    tips: "Give a specific niche and platform (LinkedIn, Twitter/X, Instagram). Generic input = generic output." },
+  { id: 9, tool: "n8n", title: "Intelligent Workflow Architect", cat: "workflow", uses: 2418,
+    prompt: "You are an automation expert specialising in N8N workflows. When I describe a process:\n\n1. Map the current manual steps (as-is)\n2. Identify automation opportunities (ranked by ROI)\n3. Design the N8N workflow (nodes, triggers, conditions, error handling)\n4. Flag rate limits, API quotas, or failure points to design around\n5. Estimate time saved per week\n\nProvide the workflow as both a description AND a JSON structure I can import into N8N.",
+    tips: "Describe your current manual process step-by-step. Include the apps you use (Gmail, Sheets, Slack, etc.)." },
+  { id: 10, tool: "elevenlabs", title: "Voice Character Bible", cat: "persona", uses: 2299,
+    prompt: "Design a complete voice character for ElevenLabs with:\n\n**Personality:** 3 core traits that affect speech patterns\n**Speaking Style:** Pace (WPM), pitch tendency, accent notes\n**Vocabulary:** 10 words/phrases this character uses frequently\n**Emotional Range:** How they sound when excited vs calm vs concerned\n**ElevenLabs Settings:** Stability, Similarity, Style Exaggeration, Speaker Boost recommendations\n\nName the character and write a 50-word sample script to test it.",
+    tips: "Think about your brand's personality first. The voice should feel like a natural extension of your brand." },
+  { id: 11, tool: "sora", title: "Cinematic B-Roll Sequence Generator", cat: "video-gen", uses: 2104,
+    prompt: "Generate a cinematic B-roll sequence for Sora:\n\nScene: [DESCRIBE SCENE]\nMood: [cinematic/documentary/dreamy/tense]\nShot types: establish → medium → close-up → detail\nCamera movement: slow push-in, subtle parallax drift\nLighting: golden hour / overcast / neon night\nDuration per shot: 4-6 seconds\nColor grade: [warm/cool/desaturated]\n\nOutput each shot as a separate Sora-optimised prompt.",
+    tips: "Use real-world location references (Times Square, Amalfi Coast) for more photorealistic output." },
+  { id: 12, tool: "perplexity", title: "Deep Competitive Intelligence Report", cat: "research", uses: 1987,
+    prompt: "Conduct a deep competitive intelligence analysis on [COMPANY/PRODUCT] using Perplexity's real-time search.\n\n1. **Market Position:** Revenue estimates, market share, growth trajectory\n2. **Product Strategy:** Key features, recent releases, roadmap signals\n3. **Go-to-Market:** Pricing, ICP, distribution channels\n4. **Strengths & Moats:** What makes them hard to displace?\n5. **Weaknesses & Gaps:** Where do customers complain? (G2, Reddit, Twitter)\n6. **Recent News:** Last 90 days of significant moves\n7. **Our Opportunity:** Where can we win against them?\n\nCite every claim with a source URL.",
+    tips: "Run this with Perplexity Pro for real-time sourcing. Ask follow-up questions to drill into any section." },
+  { id: 13, tool: "suno", title: "Brand Anthem Track Generator", cat: "audio-music", uses: 1654,
+    prompt: "Generate a brand anthem track in Suno:\n\nBrand: [NAME]\nGenre: [epic orchestral/indie pop/lo-fi hip hop/electronic]\nTempo: [BPM]\nKey: [major for uplifting / minor for emotional]\nInstruments: [list 3-5 key instruments]\nMood: [inspirational/energetic/calm/bold]\nDuration: 60 seconds\n\nLyric themes: [brand values in 3 words]\nHook: repeat the brand name [N] times naturally\n\nOutput Suno prompt with style tags and lyric structure.",
+    tips: "Keep the lyric brief and hooky. Suno performs best with clear genre and tempo directives." },
+  { id: 14, tool: "langchain", title: "ReAct Agent with Tool Calling", cat: "agent", uses: 1823,
+    prompt: "Build a LangChain ReAct agent:\n\nGoal: [DESCRIBE GOAL]\nTools: web_search, code_executor, file_reader, api_caller\n\nAgent Loop:\n1. Thought: reason about the current state\n2. Action: select the best tool\n3. Observation: process tool output\n4. Repeat until task complete\n\nSystem prompt: You are a precise, tool-using agent. Always verify results before reporting. If a tool fails, try an alternative approach.\n\nOutput: complete LangChain Python code with error handling and LangSmith tracing.",
+    tips: "Define the agent's stopping condition explicitly to prevent infinite loops." },
+  { id: 15, tool: "zapier", title: "Lead Scoring Automation Zap", cat: "workflow", uses: 1598,
+    prompt: "Build a Zapier lead scoring workflow:\n\nTrigger: New form submission (Typeform/HubSpot/etc)\nStep 1 — Score: Calculate lead score based on:\n  - Company size: Enterprise (+30), SMB (+15), Individual (+5)\n  - Intent signal: Demo request (+40), Content download (+15), Newsletter (+5)\n  - Job title: Decision maker (+25), Influencer (+15), IC (+5)\nStep 2 — Route: \n  - Score ≥ 70: Create deal in CRM + notify AE in Slack\n  - Score 40-69: Add to nurture sequence in email platform\n  - Score < 40: Add to general newsletter list\nStep 3 — Track: Log all scores to Google Sheets\n\nOutput: Zap configuration with field mappings.",
+    tips: "Adjust score thresholds based on your conversion data. Start with rough estimates and iterate." },
 ];
 
-// ─── Generation helpers ───────────────────────────────────────────────────────
-const TOOLS = [
-  "claude", "claude-code", "gemini", "gemini-biz", "chatgpt", "cursor",
-  "perplexity", "copilot", "replit", "midjourney", "sora", "veo", "kling",
-  "elevenlabs", "suno", "n8n", "zapier", "abacus", "manus", "langchain",
-  "huggingface", "supabase", "github", "hailuo", "heygen", "higgsfield",
-  "music-fx", "lemon-ai", "freepik", "roboflow", "minimax", "firebase",
-  "nano-banana", "atoms-dev", "blink-new", "google-ai", "qwen", "kimi",
-];
+// ─── Category → tool pool (ensures correct tool-prompt matching) ──────────────
+// Every generated prompt's tool is drawn ONLY from its category's valid tools
+const CATEGORY_TOOL_MAP: Record<string, string[]> = {
+  "system-prompt":  ["claude", "chatgpt", "gemini", "claude-code", "copilot", "qwen", "kimi"],
+  "god-prompt":     ["claude", "chatgpt", "gemini", "perplexity"],
+  "meta-prompt":    ["claude", "claude-code", "chatgpt", "gemini", "perplexity"],
+  "workflow":       ["n8n", "zapier", "manus", "lemon-ai", "abacus"],
+  "image-gen":      ["midjourney", "freepik", "google-ai", "minimax"],
+  "video-gen":      ["sora", "veo", "kling", "hailuo", "higgsfield", "heygen", "minimax"],
+  "audio-music":    ["elevenlabs", "suno", "music-fx"],
+  "code-gen":       ["claude-code", "cursor", "github", "replit", "claude", "chatgpt", "atoms-dev", "blink-new"],
+  "research":       ["perplexity", "claude", "gemini", "chatgpt", "google-ai", "kimi", "qwen"],
+  "content":        ["chatgpt", "claude", "gemini", "copilot", "qwen", "kimi"],
+  "agent":          ["langchain", "abacus", "manus", "claude", "chatgpt", "n8n"],
+  "rag":            ["langchain", "huggingface", "supabase", "firebase", "gemini", "abacus"],
+  "ux-design":      ["claude", "chatgpt", "gemini", "freepik", "copilot"],
+  "marketing":      ["chatgpt", "claude", "gemini", "copilot", "perplexity"],
+  "productivity":   ["claude", "chatgpt", "gemini", "copilot", "perplexity", "kimi"],
+  "persona":        ["claude", "chatgpt", "elevenlabs", "gemini", "heygen"],
+  "creative":       ["claude", "chatgpt", "gemini", "qwen", "kimi"],
+  "data-analysis":  ["claude", "chatgpt", "gemini", "google-ai", "perplexity", "abacus"],
+  "testing":        ["claude-code", "cursor", "github", "replit", "claude", "chatgpt"],
+  "devops":         ["claude-code", "cursor", "github", "supabase", "firebase", "replit"],
+  "support":        ["chatgpt", "claude", "copilot", "gemini", "kimi"],
+  "sales":          ["chatgpt", "claude", "gemini", "copilot", "perplexity"],
+  "education":      ["claude", "chatgpt", "gemini", "perplexity", "copilot"],
+  "seo":            ["chatgpt", "claude", "gemini", "perplexity", "copilot"],
+};
 
-const CATEGORIES = [
-  "system-prompt", "god-prompt", "meta-prompt", "workflow", "image-gen",
-  "video-gen", "audio-music", "code-gen", "research", "content", "agent",
-  "rag", "ux-design", "marketing", "productivity", "persona", "creative",
-  "data-analysis", "testing", "devops", "support", "sales", "education", "seo",
-];
+// ─── Tool-aware prompt body builder ──────────────────────────────────────────
+// Returns a prompt that explicitly references the tool's capabilities/interface
+function buildPromptBody(tool: string, adj: string, domain: string, cat: string): string {
+  const catLabel = cat.replace(/-/g, " ");
+
+  const TOOL_CONTEXT: Record<string, string> = {
+    "claude":       "Leverage Claude's extended thinking and nuanced reasoning.",
+    "claude-code":  "Use Claude Code's file tools, bash execution, and repo-wide context.",
+    "cursor":       "Use Cursor's codebase indexing and inline AI edits across files.",
+    "chatgpt":      "Use GPT-4o's broad knowledge and structured output capabilities.",
+    "gemini":       "Leverage Gemini's multimodal input and 1M-token context window.",
+    "gemini-biz":   "Apply Gemini Business's enterprise integrations and Workspace access.",
+    "perplexity":   "Use Perplexity's real-time web search and cited sourcing.",
+    "copilot":      "Use Microsoft Copilot's deep Microsoft 365 integration.",
+    "qwen":         "Leverage Qwen's multilingual and long-context strengths.",
+    "kimi":         "Use Kimi's 200K+ context window for document-heavy tasks.",
+    "midjourney":   "Craft a Midjourney v6.1 prompt using --ar, --style, --v flags.",
+    "freepik":      "Use Freepik Pikaso's style presets and aspect ratio controls.",
+    "sora":         "Generate a Sora video prompt with shot, camera, and duration specs.",
+    "veo":          "Use Veo 3.1's cinematic realism and motion control parameters.",
+    "kling":        "Specify Kling AI motion vectors, style, and duration parameters.",
+    "hailuo":       "Use Hailuo's scene-to-motion pipeline with detailed action prompts.",
+    "heygen":       "Configure a HeyGen avatar, voice, and script for video generation.",
+    "higgsfield":   "Use Higgsfield's camera-move and motion-intensity controls.",
+    "elevenlabs":   "Configure ElevenLabs voice settings: Stability, Similarity, Style.",
+    "suno":         "Write a Suno track with style tags, BPM, and lyric structure.",
+    "music-fx":     "Craft a Google Music FX sound design prompt with mood and duration.",
+    "n8n":          "Design an N8N workflow with trigger, transform, and output nodes.",
+    "zapier":       "Build a Zap with trigger, filters, and multi-step actions.",
+    "manus":        "Configure a Manus AI autonomous agent with tools and guardrails.",
+    "lemon-ai":     "Set up a LemonAI workflow with connected apps and routing logic.",
+    "abacus":       "Configure an Abacus AI pipeline with model, features, and metrics.",
+    "langchain":    "Build a LangChain chain or agent with tools and memory in Python.",
+    "huggingface":  "Define a HuggingFace model card, fine-tuning config, and Spaces demo.",
+    "supabase":     "Design a Supabase schema with RLS policies and Edge Functions.",
+    "firebase":     "Build a Firebase backend with Firestore rules and Cloud Functions.",
+    "replit":       "Configure a Replit project with secrets, run command, and deployment.",
+    "github":       "Write Copilot instructions and a GitHub Actions CI/CD workflow.",
+    "google-ai":    "Configure Google AI Studio with system instructions and safety settings.",
+    "roboflow":     "Set up a Roboflow dataset with classes, augmentations, and model config.",
+    "minimax":      "Use Minimax's group-chat simulation or long-context API.",
+    "atoms-dev":    "Build an Atoms.dev component with props, variants, and Storybook stories.",
+    "blink-new":    "Write a Blink.new one-shot app prompt with stack, features, and design.",
+    "nano-banana":  "Configure a Nano Banana Pro A/B experiment with metrics and segments.",
+  };
+
+  const toolCtx = TOOL_CONTEXT[tool] ?? "Apply the tool's core capabilities to the task.";
+
+  return `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist. ${toolCtx}\n\nTask category: ${catLabel}\n\nApproach:\n1. Understand the full scope and constraints before acting\n2. Apply ${adj.toLowerCase()} ${domain.toLowerCase()} domain expertise\n3. Structure output with clear headers and numbered steps\n4. Provide 2-3 solution variants ranked by impact and effort\n5. Flag any assumptions, risks, or prerequisites explicitly\n\nDeliver direct, specific, actionable output — no generic filler.`;
+}
 
 const ADJECTIVES = [
   "Elite", "Advanced", "Precision", "Strategic", "Dynamic", "Adaptive",
   "Expert", "Professional", "Optimised", "High-Performance", "Automated",
   "Intelligent", "Scalable", "Robust", "Streamlined", "Efficient", "Enhanced",
   "Comprehensive", "Powerful", "Next-Level", "Data-Driven", "AI-Powered",
-  "Context-Aware", "Multi-Modal", "Zero-Shot", "Few-Shot", "Fine-Tuned",
+  "Context-Aware", "Zero-Shot", "Few-Shot", "Fine-Tuned",
 ];
 
-const DOMAINS = [
-  "Copywriting", "Engineering", "Research", "Analysis", "Design", "Marketing",
-  "Product", "Operations", "Finance", "Legal", "HR", "Sales", "Support",
-  "Education", "Healthcare", "E-commerce", "SaaS", "Startup", "Enterprise",
-  "Creative", "Analytics", "Automation", "Infrastructure", "Security",
-];
+const CAT_DOMAINS: Record<string, string[]> = {
+  "code-gen":      ["Engineering", "Architecture", "Infrastructure", "Security", "Performance"],
+  "image-gen":     ["Product", "Brand", "Creative", "Editorial", "Commercial"],
+  "video-gen":     ["Marketing", "Brand", "Creative", "Documentary", "Commercial"],
+  "audio-music":   ["Brand", "Creative", "Podcast", "Marketing", "Entertainment"],
+  "workflow":      ["Operations", "Marketing", "Sales", "Engineering", "Finance"],
+  "research":      ["Market", "Academic", "Competitive", "Financial", "Technical"],
+  "content":       ["Marketing", "Brand", "Editorial", "Social Media", "SEO"],
+  "agent":         ["Research", "Engineering", "Operations", "Analysis", "Automation"],
+  "rag":           ["Engineering", "Research", "Legal", "Healthcare", "Finance"],
+  "ux-design":     ["Product", "Brand", "Mobile", "Enterprise", "Consumer"],
+  "marketing":     ["Growth", "Brand", "Performance", "Content", "Product"],
+  "productivity":  ["Operations", "Engineering", "Sales", "Leadership", "Research"],
+  "persona":       ["Customer", "Brand", "Sales", "Support", "Leadership"],
+  "creative":      ["Brand", "Content", "Storytelling", "Marketing", "Product"],
+  "data-analysis": ["Business", "Product", "Marketing", "Financial", "Operational"],
+  "testing":       ["Engineering", "Product", "Security", "Performance", "API"],
+  "devops":        ["Infrastructure", "Security", "Platform", "Cloud", "SRE"],
+  "support":       ["Customer", "Technical", "Product", "Enterprise", "Success"],
+  "sales":         ["Enterprise", "SMB", "Product", "Growth", "Outbound"],
+  "education":     ["Technical", "Product", "Leadership", "Marketing", "Design"],
+  "seo":           ["Technical", "Content", "E-commerce", "Local", "International"],
+  "system-prompt": ["Engineering", "Research", "Creative", "Business", "Support"],
+  "god-prompt":    ["Strategic", "Research", "Creative", "Engineering", "Business"],
+  "meta-prompt":   ["Engineering", "Research", "Creative", "Product", "Marketing"],
+};
 
-const PROMPT_TEMPLATES = [
-  (adj: string, domain: string) =>
-    `You are a ${adj.toLowerCase()} ${domain.toLowerCase()} specialist. Your task is to analyse the given input with ${adj.toLowerCase()} precision and provide structured, actionable output. Always:\n\n1. Identify the core objective\n2. Surface hidden constraints\n3. Propose 3 solutions ranked by impact\n4. Recommend the optimal path with clear reasoning\n\nBe direct. Be specific. Avoid generic advice.`,
+const CAT_LABELS: Record<string, string> = {
+  "system-prompt": "System Prompt", "god-prompt": "God Prompt", "meta-prompt": "Meta Prompt",
+  "workflow": "Workflow", "image-gen": "Image Generation", "video-gen": "Video Generation",
+  "audio-music": "Audio & Music", "code-gen": "Code Generation", "research": "Research & Analysis",
+  "content": "Content Creation", "agent": "Agent Framework", "rag": "RAG & Data",
+  "ux-design": "UX & Design", "marketing": "Marketing", "productivity": "Productivity",
+  "persona": "Persona", "creative": "Creative Writing", "data-analysis": "Data Analysis",
+  "testing": "Testing & QA", "devops": "DevOps", "support": "Customer Support",
+  "sales": "Sales", "education": "Education", "seo": "SEO & Copywriting",
+};
 
-  (adj: string, domain: string) =>
-    `Act as an ${adj.toLowerCase()} ${domain.toLowerCase()} consultant with 20 years of experience. When presented with a challenge:\n\n**Diagnose:** What is the real problem beneath the stated problem?\n**Benchmark:** What do best-in-class solutions look like?\n**Prescribe:** What is the step-by-step path to excellence?\n**Measure:** What KPIs should we track to validate success?\n\nAlways challenge assumptions. Prioritise leverage over effort.`,
-
-  (adj: string, domain: string) =>
-    `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} AI agent. Your capabilities:\n\n- Deep domain expertise in ${domain.toLowerCase()}\n- Systematic framework application\n- Data-driven decision making\n- Clear, structured communication\n\nFor every request: understand context → apply framework → deliver insight → suggest next action.\n\nFormat all outputs with clear headers, bullets, and action items.`,
-];
-
-const TIPS_TEMPLATES = [
-  "Provide as much context as possible for best results. Include specific constraints, deadlines, and success criteria.",
-  "Works best when you define your audience and goal upfront. The more specific your input, the more targeted the output.",
+const TIPS_POOL = [
+  "Provide as much context as possible. Include constraints, deadlines, and success criteria.",
+  "Define your audience and goal upfront. The more specific your input, the better the output.",
   "Test with real data from your domain. Iterate 2-3 times for optimal results.",
-  "Start with a clear problem statement. Paste any relevant background information before your question.",
+  "Start with a clear problem statement. Paste relevant background before your question.",
+  "Replace all [BRACKETED] placeholders before running. Specificity drives quality.",
+  "Specify your tech stack, team size, and constraints upfront for best results.",
   "Use this as a starting point, then refine with follow-up questions for deeper analysis.",
 ];
 
-// ─── Seeded pseudo-random for deterministic builds ───────────────────────────
+// ─── Seeded PRNG (deterministic — same output every build) ────────────────────
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
@@ -164,27 +194,33 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-// ─── Generate 5,000 prompts deterministically ─────────────────────────────────
+// ─── Generate 5,000 prompts with correct tool↔category mapping ───────────────
 function generatePrompts(): Prompt[] {
   const rand = seededRandom(42);
+  const CATEGORIES = Object.keys(CATEGORY_TOOL_MAP);
   const generated: Prompt[] = [];
 
   for (let i = 0; i < 5000; i++) {
-    const tool = TOOLS[Math.floor(rand() * TOOLS.length)];
+    // 1. Pick category first
     const cat = CATEGORIES[Math.floor(rand() * CATEGORIES.length)];
+    // 2. Pick tool ONLY from that category's valid pool → no more mismatches
+    const toolPool = CATEGORY_TOOL_MAP[cat];
+    const tool = toolPool[Math.floor(rand() * toolPool.length)];
+    // 3. Pick a domain relevant to the category
+    const domainPool = CAT_DOMAINS[cat] ?? ["Business", "Technical", "Creative"];
+    const domain = domainPool[Math.floor(rand() * domainPool.length)];
     const adj = ADJECTIVES[Math.floor(rand() * ADJECTIVES.length)];
-    const domain = DOMAINS[Math.floor(rand() * DOMAINS.length)];
-    const tmpl = PROMPT_TEMPLATES[Math.floor(rand() * PROMPT_TEMPLATES.length)];
-    const tips = TIPS_TEMPLATES[Math.floor(rand() * TIPS_TEMPLATES.length)];
+    const tips = TIPS_POOL[Math.floor(rand() * TIPS_POOL.length)];
     const uses = Math.floor(rand() * 4000) + 50;
+    const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
 
     generated.push({
       id: 1000 + i,
       tool,
-      title: `${adj} ${domain} ${cat.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())} Prompt`,
+      title: `${adj} ${domain} ${catLabel} Prompt`,
       cat,
       uses,
-      prompt: tmpl(adj, domain),
+      prompt: buildPromptBody(tool, adj, domain, cat),
       tips,
     });
   }
@@ -192,91 +228,56 @@ function generatePrompts(): Prompt[] {
   return generated;
 }
 
-// ─── Combined, sorted prompt DB (hero prompts first) ─────────────────────────
+// ─── Singleton DB ─────────────────────────────────────────────────────────────
 let _db: Prompt[] | null = null;
 
 export function getPromptDB(): Prompt[] {
-  if (!_db) {
-    _db = [...HERO_PROMPTS, ...generatePrompts()];
-  }
+  if (!_db) _db = [...HERO_PROMPTS, ...generatePrompts()];
   return _db;
 }
 
-// ─── Inject user-uploaded prompts at runtime ──────────────────────────────────
 export function prependUserPrompts(uploads: Prompt[]): void {
   const db = getPromptDB();
-  // Remove old user uploads, prepend fresh ones
   _db = [...uploads, ...db.filter((p) => !p.isUserUpload)];
 }
 
-// ─── Paginated + filtered query (replaces API call) ──────────────────────────
+// ─── Paginated query ──────────────────────────────────────────────────────────
 export const PAGE_SIZE = 24;
 
-export function queryPrompts(
-  filter: FilterState,
-  favIds: number[],
-  page: number
-): PaginatedResult {
+export function queryPrompts(filter: FilterState, favIds: number[], page: number): PaginatedResult {
   let prompts = getPromptDB();
 
-  // Tool filter
-  if (filter.toolFilter) {
+  if (filter.toolFilter)
     prompts = prompts.filter((p) => p.tool === filter.toolFilter);
-  }
 
-  // Category filter
-  if (filter.categoryFilter && filter.categoryFilter !== "all") {
+  if (filter.categoryFilter && filter.categoryFilter !== "all")
     prompts = prompts.filter((p) => p.cat === filter.categoryFilter);
-  }
 
-  // Search
   if (filter.search) {
     const q = filter.search.toLowerCase();
     prompts = prompts.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.cat.toLowerCase().includes(q) ||
-        p.tool.toLowerCase().includes(q) ||
-        p.prompt.toLowerCase().includes(q)
+      (p) => p.title.toLowerCase().includes(q) || p.cat.includes(q) ||
+             p.tool.includes(q) || p.prompt.toLowerCase().includes(q)
     );
   }
 
-  // Sort
   switch (filter.sort) {
-    case "most-used":
-      prompts = [...prompts].sort((a, b) => b.uses - a.uses);
-      break;
-    case "newest":
-      prompts = [...prompts].sort(
-        (a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id)
-      );
-      break;
-    case "alphabetical":
-      prompts = [...prompts].sort((a, b) => a.title.localeCompare(b.title));
-      break;
-    case "favorites":
-      prompts = prompts.filter((p) => favIds.includes(p.id));
-      break;
+    case "most-used":     prompts = [...prompts].sort((a, b) => b.uses - a.uses); break;
+    case "newest":        prompts = [...prompts].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id)); break;
+    case "alphabetical":  prompts = [...prompts].sort((a, b) => a.title.localeCompare(b.title)); break;
+    case "favorites":     prompts = prompts.filter((p) => favIds.includes(p.id)); break;
   }
 
   const total = prompts.length;
   const start = page * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-
-  return {
-    prompts: prompts.slice(start, end),
-    total,
-    hasMore: end < total,
-    page,
-  };
+  return { prompts: prompts.slice(start, end), total, hasMore: end < total, page };
 }
 
-// ─── Trending: top 48 by uses ─────────────────────────────────────────────────
 export function getTrendingPrompts(): Prompt[] {
   return [...getPromptDB()].sort((a, b) => b.uses - a.uses).slice(0, 48);
 }
 
-// ─── Get single prompt by ID ──────────────────────────────────────────────────
 export function getPromptById(id: number): Prompt | undefined {
   return getPromptDB().find((p) => p.id === id);
 }

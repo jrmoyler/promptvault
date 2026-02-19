@@ -86,10 +86,7 @@ export default function VirtualPromptList({
   if (isLoading) {
     return (
       <div
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
-        }}
+        className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
         aria-busy="true"
         aria-label="Loading prompts"
       >
@@ -125,10 +122,7 @@ export default function VirtualPromptList({
       <div
         role="list"
         aria-label="Prompt library"
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
-        }}
+        className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
       >
         {prompts.map((p) => (
           <div key={p.id} role="listitem">

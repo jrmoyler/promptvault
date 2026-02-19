@@ -48,7 +48,7 @@ export default function FavoritesPage() {
     <main className="flex flex-col min-h-full">
       <TopBar title="My Favorites" showSearch={false} />
 
-      <div className="px-6 py-6">
+      <div className="px-3 sm:px-6 py-4 sm:py-6">
         {favorites.length === 0 ? (
           <EmptyFavorites />
         ) : (
