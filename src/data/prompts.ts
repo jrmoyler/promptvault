@@ -455,6 +455,10 @@ function buildPromptBody(tool: string, adj: string, domain: string, cat: string,
   const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
   const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
   const executionVariant = EXECUTION_VARIANTS[variantIdx % EXECUTION_VARIANTS.length];
+function buildPromptBody(tool: string, adj: string, domain: string, cat: string): string {
+  const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
+  const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
+  const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
 
   return `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist using ${tool}.
 Tool guidance: ${toolCtx}
@@ -466,6 +470,12 @@ ${categoryTemplate}
 
 Final output requirement: respond with concrete, execution-ready content only.
 ${executionVariant}`;
+
+Fill all [BRACKETED] fields before running.
+
+${categoryTemplate}
+
+Final output requirement: respond with concrete, execution-ready content only.`;
 }
 
 const ADJECTIVES = [
