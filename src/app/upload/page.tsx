@@ -36,6 +36,14 @@ function Field({
 const INPUT_CLS =
   "bg-surface2 border border-[rgba(120,100,255,0.15)] rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-muted/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all";
 
+const MIN_PROMPT_LENGTH = 120;
+
+function hasPromptStructure(value: string): boolean {
+  const text = value.toLowerCase();
+  const structureChecks = ["role", "task", "output", "constraint"];
+  return structureChecks.filter((term) => text.includes(term)).length >= 2;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function UploadPage() {
   const router = useRouter();
@@ -55,8 +63,11 @@ export default function UploadPage() {
     if (!title.trim()) e.title = "Title is required";
     if (!tool) e.tool = "Please select a tool";
     if (!cat) e.cat = "Please select a category";
-    if (prompt.trim().length < 20)
-      e.prompt = "Prompt must be at least 20 characters";
+    if (prompt.trim().length < MIN_PROMPT_LENGTH) {
+      e.prompt = `Prompt must be at least ${MIN_PROMPT_LENGTH} characters for full detail`;
+    } else if (!hasPromptStructure(prompt)) {
+      e.prompt = "Include at least two of: role, task, output format, constraints";
+    }
     return e;
   }
 
@@ -156,7 +167,7 @@ export default function UploadPage() {
           <Field label="Prompt Text" required>
             <textarea
               rows={8}
-              placeholder="Write your prompt here. Be specific about the role, task, format, and constraints…"
+              placeholder="Write your full prompt with role, task, output format, and constraints for best results…"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               aria-invalid={!!errors.prompt}
