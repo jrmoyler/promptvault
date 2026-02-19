@@ -34,11 +34,13 @@ function ToolFilterBanner() {
 }
 
 // ─── Stats strip ──────────────────────────────────────────────────────────────
-function StatsStrip() {
+function StatsStrip({ total }: { total: number }) {
+  const totalLabel = total > 0 ? `${total.toLocaleString()}+` : "5,000+";
+
   return (
     <div className="grid grid-cols-3 gap-2 sm:gap-3 mx-3 sm:mx-6 mt-4 sm:mt-6 mb-2">
       {[
-        { value: "5,010+", label: "Total Prompts", icon: "⚡" },
+        { value: totalLabel, label: "Total Prompts", icon: "⚡" },
         { value: "38",     label: "AI Tools",       icon: "🤖" },
         { value: "24",     label: "Categories",     icon: "📂" },
       ].map(({ value, label, icon }) => (
@@ -74,7 +76,7 @@ export default function LibraryPage() {
     <main className="flex flex-col min-h-full">
       <TopBar showSearch />
       <ToolFilterBanner />
-      <StatsStrip />
+      <StatsStrip total={total} />
 
       <div className="px-3 sm:px-6 pb-12 mt-4 sm:mt-6">
         <ErrorBoundary>
