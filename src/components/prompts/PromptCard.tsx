@@ -45,8 +45,6 @@ const PromptCard = memo(function PromptCard({ prompt }: PromptCardProps) {
     [showToast, prompt.prompt]
   );
 
-  const preview = prompt.prompt.slice(0, 200);
-
   return (
     <article
       onClick={handleOpen}
@@ -75,17 +73,15 @@ const PromptCard = memo(function PromptCard({ prompt }: PromptCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="font-display font-semibold text-text-primary text-[15px] leading-snug line-clamp-2 group-hover:text-accent transition-colors duration-150">
+      <h3 className="font-display font-semibold text-text-primary text-[15px] leading-snug group-hover:text-accent transition-colors duration-150">
         {prompt.title}
       </h3>
 
-      {/* Prompt preview with gradient fade */}
-      <div className="relative flex-1">
-        <p className="text-muted text-xs font-mono leading-relaxed line-clamp-3">
-          {preview}
-          {prompt.prompt.length > 200 && "…"}
-        </p>
-        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-surface to-transparent pointer-events-none" />
+      {/* Full prompt text */}
+      <div className="flex-1">
+        <pre className="text-muted text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
+          {prompt.prompt}
+        </pre>
       </div>
 
       {/* Footer */}
