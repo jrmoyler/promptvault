@@ -466,6 +466,27 @@ ${categoryTemplate}
 
 Final output requirement: respond with concrete, execution-ready content only.
 ${executionVariant}`;
+function buildPromptBody(tool: string, adj: string, domain: string, cat: string): string {
+  const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
+  const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
+  const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
+
+  return `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist using ${tool}.
+Tool guidance: ${toolCtx}
+Category: ${catLabel}
+
+Fill all [BRACKETED] fields before running.
+
+${categoryTemplate}
+
+Final output requirement: respond with concrete, execution-ready content only.
+${executionVariant}`;
+
+Fill all [BRACKETED] fields before running.
+
+${categoryTemplate}
+
+Final output requirement: respond with concrete, execution-ready content only.`;
 }
 
 const ADJECTIVES = [
@@ -608,6 +629,7 @@ export function getPromptDB(): Prompt[] {
       ...generatePrompts(),
     ]);
   }
+  if (!_db) _db = [...HERO_PROMPTS, ...AWESOME_PERSONA_PROMPTS, ...generatePrompts()];
   return _db;
 }
 
