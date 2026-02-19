@@ -47,9 +47,121 @@ const HERO_PROMPTS: Prompt[] = [
   { id: 15, tool: "zapier", title: "Lead Scoring Automation Zap", cat: "workflow", uses: 1598,
     prompt: "Build a Zapier lead scoring workflow:\n\nTrigger: New form submission (Typeform/HubSpot/etc)\nStep 1 — Score: Calculate lead score based on:\n  - Company size: Enterprise (+30), SMB (+15), Individual (+5)\n  - Intent signal: Demo request (+40), Content download (+15), Newsletter (+5)\n  - Job title: Decision maker (+25), Influencer (+15), IC (+5)\nStep 2 — Route: \n  - Score ≥ 70: Create deal in CRM + notify AE in Slack\n  - Score 40-69: Add to nurture sequence in email platform\n  - Score < 40: Add to general newsletter list\nStep 3 — Track: Log all scores to Google Sheets\n\nOutput: Zap configuration with field mappings.",
     tips: "Adjust score thresholds based on your conversion data. Start with rough estimates and iterate." },
+
 ];
 
-// ─── Category → tool pool (ensures correct tool-prompt matching) ──────────────
+const AWESOME_PERSONA_PROMPTS: Prompt[] = [
+  {
+    id: 60001,
+    tool: "chatgpt",
+    title: "Act as Linux Terminal",
+    cat: "persona",
+    uses: 4120,
+    prompt: "I want you to act as a linux terminal. I will type commands and you will reply with what the terminal should show. I want you to only reply with the terminal output inside one unique code block, and nothing else. do not write explanations. do not type commands unless I instruct you to do so. When I need to tell you something in english, I will do so by putting text inside curly brackets {like this}.",
+    tips: "Source: f/awesome-chatgpt-prompts. Replace command inputs with your own shell commands.",
+  },
+  {
+    id: 60002,
+    tool: "chatgpt",
+    title: "Act as English Translator and Improver",
+    cat: "persona",
+    uses: 4018,
+    prompt: "I want you to act as an English translator, spelling corrector and improver. I will speak to you in any language and you will detect the language, translate it and answer in the corrected and improved version of my text, in English. I want you to replace my simplified A0-level words and sentences with more beautiful and elegant, upper level English words and sentences. Keep the meaning same, but make them more literary.",
+    tips: "Source: f/awesome-chatgpt-prompts. Paste any draft and get a polished English rewrite.",
+  },
+  {
+    id: 60003,
+    tool: "chatgpt",
+    title: "Act as Interviewer",
+    cat: "persona",
+    uses: 3892,
+    prompt: "I want you to act as an interviewer. I will be the candidate and you will ask me the interview questions for the [POSITION] position. I want you to only reply as the interviewer. Do not write all the conversation at once. I want you to only do the interview with me. Ask me the questions and wait for my answers. Do not write explanations.",
+    tips: "Source: f/awesome-chatgpt-prompts. Replace [POSITION] before running.",
+  },
+  {
+    id: 60004,
+    tool: "chatgpt",
+    title: "Act as JavaScript Console",
+    cat: "code-gen",
+    uses: 3750,
+    prompt: "I want you to act as a javascript console. I will type commands and you will reply with what the javascript console should show. I want you to only reply with the terminal output inside one unique code block, and nothing else. Do not write explanations. Do not type commands unless I instruct you to do so.",
+    tips: "Source: f/awesome-chatgpt-prompts. Paste JS snippets line-by-line for simulated console output.",
+  },
+  {
+    id: 60005,
+    tool: "chatgpt",
+    title: "Act as Excel Sheet",
+    cat: "productivity",
+    uses: 3610,
+    prompt: "I want you to act as a text based excel. You'll only reply with the text-based 10 rows excel sheet with row numbers and cell letters as columns (A to L). First column header should be empty to reference row number. I will tell you what to write into cells and you will only reply the result of excel table as text, and nothing else. Do not write explanations. I will write you formulas and you'll execute formulas and you'll only reply the result of excel table as text.",
+    tips: "Source: f/awesome-chatgpt-prompts. Provide cell edits or formulas and receive the updated table.",
+  },
+  {
+    id: 60006,
+    tool: "chatgpt",
+    title: "Act as Travel Guide",
+    cat: "persona",
+    uses: 3422,
+    prompt: "I want you to act as a travel guide. I will write to you my location and you will suggest a place to visit near my location. In some cases, I will also give you the type of places I will visit. You will also suggest me places of similar type that are close to my first location.",
+    tips: "Source: f/awesome-chatgpt-prompts. Fill in your location and preferred destination type.",
+  },
+  {
+    id: 60007,
+    tool: "chatgpt",
+    title: "Act as Advertiser",
+    cat: "marketing",
+    uses: 3294,
+    prompt: "I want you to act as an advertiser. You will create a campaign in order to promote a product or service of your choice. You will choose a target audience, develop key messages and slogans, select the media channels for promotion, and decide on any additional activities needed to reach your goals.",
+    tips: "Source: f/awesome-chatgpt-prompts. Replace product, audience, and channels for your campaign.",
+  },
+  {
+    id: 60008,
+    tool: "chatgpt",
+    title: "Act as Storyteller",
+    cat: "creative",
+    uses: 3221,
+    prompt: "I want you to act as a storyteller. You will come up with entertaining stories that are engaging, imaginative and captivating for the audience. It can be fairy tales, educational stories or any other type of stories which has the potential to capture people's attention and imagination. Depending on the target audience, you may choose specific themes or topics for your storytelling session.",
+    tips: "Source: f/awesome-chatgpt-prompts. Fill in audience and theme to steer the narrative.",
+  },
+  {
+    id: 60009,
+    tool: "chatgpt",
+    title: "Act as Motivational Coach",
+    cat: "persona",
+    uses: 3164,
+    prompt: "I want you to act as a motivational coach. I will provide you with some information about someone's goals and challenges, and it will be your job to come up with strategies that can help this person achieve their goals. This could involve providing positive affirmations, giving helpful advice or suggesting activities they can do to reach their end goal.",
+    tips: "Source: f/awesome-chatgpt-prompts. Add goals, blockers, and timeline in your first message.",
+  },
+  {
+    id: 60010,
+    tool: "chatgpt",
+    title: "Act as Career Counselor",
+    cat: "education",
+    uses: 3099,
+    prompt: "I want you to act as a career counselor. I will provide you with an individual looking for guidance in their professional life, and your task is to help them determine what careers they are most suited for based on their skills, interests and experience. You should also conduct research into the various options available, explain the job market trends in different industries and advise on which qualifications would be beneficial for pursuing particular fields.",
+    tips: "Source: f/awesome-chatgpt-prompts. Provide skills, interests, and experience to get a personalized path.",
+  },
+  {
+    id: 60011,
+    tool: "chatgpt",
+    title: "Act as Web Design Consultant",
+    cat: "ux-design",
+    uses: 3030,
+    prompt: "I want you to act as a web design consultant. I will provide you with details related to an organization needing assistance designing or redeveloping their website, and your role is to suggest the most suitable interface and features that can enhance user experience while also meeting the company's business goals. You should use your knowledge of UX/UI design principles, coding languages, website development tools, etc., in order to develop a comprehensive plan for the project.",
+    tips: "Source: f/awesome-chatgpt-prompts. Fill in brand, users, and business goals for better recommendations.",
+  },
+  {
+    id: 60012,
+    tool: "chatgpt",
+    title: "Act as Social Media Manager",
+    cat: "marketing",
+    uses: 2988,
+    prompt: "I want you to act as a social media manager. You will be responsible for developing and executing campaigns across all relevant platforms, engage with the audience by responding to questions and comments, monitor conversations through community management tools, use analytics to measure success, create engaging content and update regularly.",
+    tips: "Source: f/awesome-chatgpt-prompts. Add your platform mix and brand tone before starting.",
+  },
+];
+
+// ─── Category → valid tools map ───────────────────────────────────────────────
 // Every generated prompt's tool is drawn ONLY from its category's valid tools
 const CATEGORY_TOOL_MAP: Record<string, string[]> = {
   "system-prompt":  ["claude", "chatgpt", "gemini", "claude-code", "copilot", "qwen", "kimi"],
@@ -338,6 +450,11 @@ Must include:
 Deliver a ready-to-write brief and optimization checklist.`,
 };
 
+function buildPromptBody(tool: string, adj: string, domain: string, cat: string, variantIdx: number): string {
+  const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
+  const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
+  const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
+  const executionVariant = EXECUTION_VARIANTS[variantIdx % EXECUTION_VARIANTS.length];
 function buildPromptBody(tool: string, adj: string, domain: string, cat: string): string {
   const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
   const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
@@ -346,6 +463,13 @@ function buildPromptBody(tool: string, adj: string, domain: string, cat: string)
   return `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist using ${tool}.
 Tool guidance: ${toolCtx}
 Category: ${catLabel}
+
+Fill all [BRACKETED] fields before running.
+
+${categoryTemplate}
+
+Final output requirement: respond with concrete, execution-ready content only.
+${executionVariant}`;
 
 Fill all [BRACKETED] fields before running.
 
@@ -410,6 +534,13 @@ const TIPS_POOL = [
   "Use this as a starting point, then refine with follow-up questions for deeper analysis.",
 ];
 
+const EXECUTION_VARIANTS = [
+  "Output format: Decision Summary → Step-by-Step Plan → Final Deliverable.",
+  "Output format: Checklist Table → Risks & Mitigations → Ready-to-Use Final Output.",
+  "Output format: Version A (fast) + Version B (thorough) + Recommended Default.",
+  "Output format: Brief rationale first, then exact artifact the user can copy/paste.",
+];
+
 // ─── Seeded PRNG (deterministic — same output every build) ────────────────────
 function seededRandom(seed: number): () => number {
   let s = seed;
@@ -445,7 +576,7 @@ function generatePrompts(): Prompt[] {
       title: `${adj} ${domain} ${catLabel} Prompt`,
       cat,
       uses,
-      prompt: buildPromptBody(tool, adj, domain, cat),
+      prompt: buildPromptBody(tool, adj, domain, cat, i),
       tips,
     });
   }
@@ -457,7 +588,7 @@ function generatePrompts(): Prompt[] {
 let _db: Prompt[] | null = null;
 
 export function getPromptDB(): Prompt[] {
-  if (!_db) _db = [...HERO_PROMPTS, ...generatePrompts()];
+  if (!_db) _db = [...HERO_PROMPTS, ...AWESOME_PERSONA_PROMPTS, ...generatePrompts()];
   return _db;
 }
 
