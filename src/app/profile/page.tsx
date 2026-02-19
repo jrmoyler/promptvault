@@ -49,10 +49,10 @@ export default function ProfilePage() {
     <main className="flex flex-col min-h-full">
       <TopBar title="My Profile" showSearch={false} />
 
-      <div className="flex-1 px-6 py-8 max-w-2xl w-full mx-auto">
+      <div className="flex-1 px-3 sm:px-6 py-5 sm:py-8 max-w-2xl w-full mx-auto">
         {/* Avatar + stats */}
-        <div className="flex items-center gap-6 mb-8 p-6 bg-surface border border-[rgba(120,100,255,0.12)] rounded-2xl">
-          <div className="w-16 h-16 rounded-2xl bg-accent-gradient flex items-center justify-center text-white text-2xl font-bold font-display flex-shrink-0 shadow-glow">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 bg-surface border border-[rgba(120,100,255,0.12)] rounded-2xl">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent-gradient flex items-center justify-center text-white text-xl sm:text-2xl font-bold font-display flex-shrink-0 shadow-glow">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
@@ -62,7 +62,7 @@ export default function ProfilePage() {
             <p className="text-muted text-sm truncate">{email || "—"}</p>
             <p className="text-accent text-xs mt-0.5">{role || "Pro Access"}</p>
           </div>
-          <div className="flex gap-4 text-center">
+          <div className="flex gap-6 sm:gap-4 text-center mt-2 sm:mt-0 sm:ml-auto">
             <div>
               <div className="font-display font-bold text-xl text-gold">{favorites.length}</div>
               <div className="text-muted text-[11px]">Favorites</div>

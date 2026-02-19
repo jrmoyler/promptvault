@@ -16,6 +16,7 @@ interface AppStore {
   filter: FilterState;
   openModal: Prompt | null;
   toast: ToastMessage | null;
+  sidebarOpen: boolean;
 
   // Actions – Filter
   setSearch: (q: string) => void;
@@ -39,6 +40,10 @@ interface AppStore {
   saveUser: (user: User) => void;
   clearUser: () => void;
 
+  // Actions – Sidebar
+  openSidebar: () => void;
+  closeSidebar: () => void;
+
   // Actions – Toast
   showToast: (message: string, isError?: boolean) => void;
   clearToast: () => void;
@@ -61,6 +66,7 @@ export const useAppStore = create<AppStore>()(
       filter: DEFAULT_FILTER,
       openModal: null,
       toast: null,
+      sidebarOpen: false,
 
       // ── Filter actions ──────────────────────────────────────────────────────
       setSearch: (q) =>
@@ -122,6 +128,10 @@ export const useAppStore = create<AppStore>()(
       saveUser: (user) => set({ user }),
       clearUser: () => set({ user: null }),
 
+      // ── Sidebar ─────────────────────────────────────────────────────────────
+      openSidebar: () => set({ sidebarOpen: true }),
+      closeSidebar: () => set({ sidebarOpen: false }),
+
       // ── Toast ────────────────────────────────────────────────────────────────
       showToast: (message, isError = false) => {
         const id = String(generateId());
@@ -152,3 +162,4 @@ export const useOpenModal = () => useAppStore((s) => s.openModal);
 export const useToast = () => useAppStore((s) => s.toast);
 export const useUser = () => useAppStore((s) => s.user);
 export const useUserUploads = () => useAppStore((s) => s.userUploads);
+export const useSidebarOpen = () => useAppStore((s) => s.sidebarOpen);

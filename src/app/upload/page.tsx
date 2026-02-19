@@ -82,7 +82,7 @@ export default function UploadPage() {
     <main className="flex flex-col min-h-full">
       <TopBar title="Upload Prompt" showSearch={false} />
 
-      <div className="flex-1 px-6 py-8 max-w-2xl w-full mx-auto">
+      <div className="flex-1 px-3 sm:px-6 py-5 sm:py-8 max-w-2xl w-full mx-auto">
         <div className="mb-8">
           <h1 className="font-display font-bold text-2xl text-text-primary">
             Share a Prompt
@@ -112,7 +112,7 @@ export default function UploadPage() {
           </Field>
 
           {/* Tool + Category row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="AI Tool" required>
               <select
                 value={tool}
