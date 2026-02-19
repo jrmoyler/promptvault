@@ -455,6 +455,17 @@ function buildPromptBody(tool: string, adj: string, domain: string, cat: string,
   const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
   const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
   const executionVariant = EXECUTION_VARIANTS[variantIdx % EXECUTION_VARIANTS.length];
+
+  return `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist using ${tool}.
+Tool guidance: ${toolCtx}
+Category: ${catLabel}
+
+Fill all [BRACKETED] fields before running.
+
+${categoryTemplate}
+
+Final output requirement: respond with concrete, execution-ready content only.
+${executionVariant}`;
 function buildPromptBody(tool: string, adj: string, domain: string, cat: string): string {
   const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
   const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
@@ -587,7 +598,37 @@ function generatePrompts(): Prompt[] {
 // ─── Singleton DB ─────────────────────────────────────────────────────────────
 let _db: Prompt[] | null = null;
 
+function normalizePromptDB(prompts: Prompt[]): Prompt[] {
+  const seen = new Set<number>();
+  const normalized: Prompt[] = [];
+
+  for (const prompt of prompts) {
+    if (!prompt || typeof prompt.id !== "number") continue;
+    if (seen.has(prompt.id)) continue;
+    if (!prompt.title?.trim() || !prompt.prompt?.trim()) continue;
+
+    seen.add(prompt.id);
+    normalized.push({
+      ...prompt,
+      title: prompt.title.trim(),
+      prompt: prompt.prompt.trim(),
+      cat: prompt.cat?.trim() || "content",
+      tool: prompt.tool?.trim() || "chatgpt",
+      uses: Number.isFinite(prompt.uses) ? prompt.uses : 0,
+    });
+  }
+
+  return normalized;
+}
+
 export function getPromptDB(): Prompt[] {
+  if (!_db) {
+    _db = normalizePromptDB([
+      ...HERO_PROMPTS,
+      ...AWESOME_PERSONA_PROMPTS,
+      ...generatePrompts(),
+    ]);
+  }
   if (!_db) _db = [...HERO_PROMPTS, ...AWESOME_PERSONA_PROMPTS, ...generatePrompts()];
   return _db;
 }
