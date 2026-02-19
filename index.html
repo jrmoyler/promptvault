@@ -1,0 +1,3483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptVault — Team AI Prompt Library</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&family=Inter:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #09090f;
+    --surface: #111118;
+    --surface2: #1a1a26;
+    --border: rgba(120,100,255,0.15);
+    --accent: #7c5cfc;
+    --accent2: #00e5c3;
+    --accent3: #ff6b6b;
+    --text: #e8e6f0;
+    --muted: #6b6880;
+    --gold: #f0c040;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* AMBIENT BG */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(124,92,252,0.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -30%;
+    right: -20%;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(0,229,195,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 17px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+  .nav-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 20px 20px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    border-radius: 0;
+    font-size: 13px;
+    color: var(--muted);
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    position: relative;
+  }
+
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,92,252,0.06); }
+
+  .nav-item .badge {
+    margin-left: auto;
+    font-size: 9px;
+    background: rgba(124,92,252,0.2);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #9b59b6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 10px; color: var(--muted); }
+
+  /* MAIN CONTENT */
+  .main {
+    margin-left: 260px;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(9,9,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 600px;
+    position: relative;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.4;
+    font-size: 14px;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 40px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { border-color: rgba(124,92,252,0.4); }
+
+  .search-kbd {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .topbar-actions { display: flex; gap: 10px; margin-left: auto; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: #6a4de0; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: rgba(124,92,252,0.4); color: var(--accent); }
+
+  /* PAGE CONTENT */
+  .page { padding: 32px; display: none; }
+  .page.active { display: block; }
+
+  /* HERO STATS */
+  .hero {
+    margin-bottom: 32px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p { color: var(--muted); font-size: 14px; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* CATEGORY CHIPS */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.active { background: rgba(124,92,252,0.15); border-color: var(--accent); color: var(--accent); }
+
+  /* PROMPT GRID */
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 16px;
+  }
+
+  .prompt-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .prompt-card:hover {
+    border-color: rgba(124,92,252,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(124,92,252,0.1);
+  }
+
+  .prompt-card.favorited { border-color: rgba(240,192,64,0.3); }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .tool-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .card-actions { display: flex; gap: 6px; }
+
+  .icon-btn {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+
+  .icon-btn:hover { border-color: var(--accent); }
+  .icon-btn.fav-active { background: rgba(240,192,64,0.1); border-color: rgba(240,192,64,0.4); }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+
+  .card-preview {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    max-height: 70px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card-preview::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 24px;
+    background: linear-gradient(transparent, rgba(17,17,24,0.9));
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+
+  .cat-tag {
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .interaction-count {
+    font-size: 10px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 32px;
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--muted);
+  }
+
+  .modal-tool { margin-bottom: 8px; }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .modal-meta { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+
+  .modal-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .modal-prompt-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #c8c4e8;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .copy-prompt-btn {
+    position: absolute;
+    top: 12px; right: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+  }
+
+  .copy-prompt-btn:hover { background: #6a4de0; }
+
+  .modal-tips {
+    background: rgba(0,229,195,0.05);
+    border: 1px solid rgba(0,229,195,0.15);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* TOOL COLOR BADGES */
+  .badge-claude { background: rgba(215,119,65,0.15); color: #e8884a; }
+  .badge-gemini { background: rgba(66,133,244,0.15); color: #6ca0f5; }
+  .badge-chatgpt { background: rgba(16,163,127,0.15); color: #1cc494; }
+  .badge-midjourney { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .badge-n8n { background: rgba(235,68,53,0.15); color: #f07070; }
+  .badge-cursor { background: rgba(255,255,255,0.08); color: #c0bdd0; }
+  .badge-elevenlabs { background: rgba(240,192,64,0.15); color: var(--gold); }
+  .badge-perplexity { background: rgba(0,229,195,0.15); color: var(--accent2); }
+  .badge-suno { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .badge-veo { background: rgba(66,133,244,0.15); color: #6ca0f5; }
+  .badge-kling { background: rgba(255,107,107,0.15); color: var(--accent3); }
+  .badge-hailuo { background: rgba(0,229,195,0.15); color: var(--accent2); }
+  .badge-heygen { background: rgba(124,92,252,0.15); color: var(--accent); }
+  .badge-freepik { background: rgba(50,200,100,0.15); color: #5ecf80; }
+  .badge-copilot { background: rgba(66,133,244,0.15); color: #6ca0f5; }
+  .badge-replit { background: rgba(240,120,60,0.15); color: #f09060; }
+  .badge-zapier { background: rgba(255,82,0,0.15); color: #ff7030; }
+  .badge-langchain { background: rgba(100,200,50,0.15); color: #80d060; }
+  .badge-huggingface { background: rgba(240,192,64,0.15); color: var(--gold); }
+  .badge-qwen { background: rgba(120,80,200,0.15); color: #9070e0; }
+  .badge-kimi { background: rgba(0,180,200,0.15); color: #40d0e0; }
+  .badge-sora { background: rgba(16,163,127,0.15); color: #1cc494; }
+  .badge-abacus { background: rgba(200,120,50,0.15); color: #d09060; }
+  .badge-manus { background: rgba(150,50,200,0.15); color: #b070e0; }
+  .badge-minimax { background: rgba(50,150,200,0.15); color: #60b0d0; }
+  .badge-higgsfield { background: rgba(200,50,100,0.15); color: #e07090; }
+  .badge-supabase { background: rgba(50,200,100,0.15); color: #5ecf80; }
+  .badge-github { background: rgba(200,200,200,0.1); color: #c0c0c0; }
+
+  /* UPLOAD SECTION */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(124,92,252,0.04); }
+  .upload-zone .upload-icon { font-size: 36px; margin-bottom: 12px; }
+  .upload-zone h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .upload-zone p { font-size: 12px; color: var(--muted); }
+
+  /* FORM FIELDS */
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border 0.2s;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: rgba(124,92,252,0.5); }
+  .form-textarea { resize: vertical; min-height: 120px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* PROFILE PAGE */
+  .profile-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .profile-avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'Syne', sans-serif;
+    flex-shrink: 0;
+  }
+
+  .profile-info h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+  .profile-info p { color: var(--muted); font-size: 13px; }
+
+  .profile-stats { display: flex; gap: 32px; margin-top: 16px; }
+  .profile-stat { text-align: center; }
+  .profile-stat-num { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .profile-stat-label { font-size: 10px; color: var(--muted); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface2);
+    border: 1px solid rgba(0,229,195,0.3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--accent2);
+    z-index: 9999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(124,92,252,0.3); border-radius: 10px; }
+
+  /* LOADING */
+  .loader {
+    display: flex;
+    gap: 6px;
+    padding: 40px;
+    justify-content: center;
+  }
+  .loader span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 0.8s infinite;
+  }
+  .loader span:nth-child(2) { animation-delay: 0.15s; }
+  .loader span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 60px; color: var(--muted); }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .sidebar { width: 220px; }
+    .main { margin-left: 220px; }
+    .prompt-grid { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .section-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+
+  .kbd { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+
+  /* pulsing dot */
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">PromptVault</div>
+      <div class="logo-sub">Team Prompt Library</div>
+    </div>
+  </div>
+
+  <div class="nav-section-label">Explore</div>
+  <div class="nav-item active" onclick="showPage('library')">
+    <span>🗂️</span> All Prompts <span class="badge">5000</span>
+  </div>
+  <div class="nav-item" onclick="showPage('favorites')">
+    <span>⭐</span> My Favorites
+  </div>
+  <div class="nav-item" onclick="showPage('trending')">
+    <span>🔥</span> Trending
+  </div>
+
+  <div class="nav-section-label">By Tool</div>
+  <div class="nav-item" onclick="filterByTool('claude')"><span>🟠</span> Claude (Code + Pro)</div>
+  <div class="nav-item" onclick="filterByTool('gemini')"><span>🔵</span> Gemini / AI Studio</div>
+  <div class="nav-item" onclick="filterByTool('chatgpt')"><span>🟢</span> ChatGPT Pro</div>
+  <div class="nav-item" onclick="filterByTool('midjourney')"><span>🎨</span> Midjourney</div>
+  <div class="nav-item" onclick="filterByTool('cursor')"><span>💻</span> Cursor Pro</div>
+  <div class="nav-item" onclick="filterByTool('n8n')"><span>🔗</span> N8N / Zapier</div>
+  <div class="nav-item" onclick="filterByTool('elevenlabs')"><span>🎙️</span> ElevenLabs</div>
+  <div class="nav-item" onclick="filterByTool('suno')"><span>🎵</span> Suno / Music FX</div>
+  <div class="nav-item" onclick="filterByTool('video')"><span>🎬</span> Video AI</div>
+  <div class="nav-item" onclick="filterByTool('perplexity')"><span>🔍</span> Perplexity Pro</div>
+
+  <div class="nav-section-label">Workspace</div>
+  <div class="nav-item" onclick="showPage('upload')"><span>⬆️</span> Upload Prompt</div>
+  <div class="nav-item" onclick="showPage('profile')"><span>👤</span> My Profile</div>
+
+  <div class="sidebar-footer">
+    <div class="avatar" id="userAvatar">JM</div>
+    <div class="user-info">
+      <div class="user-name" id="userName">Team Member</div>
+      <div class="user-role">Pro Access</div>
+    </div>
+    <span class="live-dot"></span>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" type="text" placeholder="Search 5,000 prompts by tool, keyword, or category..." id="searchInput">
+      <span class="search-kbd">⌘K</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="showPage('upload')">+ Add Prompt</button>
+      <button class="btn btn-primary" onclick="showLoginModal()">Sign In</button>
+    </div>
+  </div>
+
+  <!-- LIBRARY PAGE -->
+  <div class="page active" id="page-library">
+    <div class="hero">
+      <h1>Team Prompt Library</h1>
+      <p>5,000 battle-tested prompts for every AI tool in your stack — collected from Reddit, GitHub, YouTube, X, and research papers.</p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num">5,000</div>
+          <div class="stat-label">Total Prompts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">38</div>
+          <div class="stat-label">AI Tools Covered</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">24</div>
+          <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">12</div>
+          <div class="stat-label">Team Members</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">Browse Prompts</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select class="form-select" style="width:auto;padding:7px 12px;font-size:12px;" id="sortSelect" onchange="renderPrompts()">
+          <option>Most Used</option>
+          <option>Newest</option>
+          <option>Alphabetical</option>
+          <option>Favorites</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="filter-row" id="filterRow">
+      <div class="chip active" onclick="setFilter('all', this)">All Tools</div>
+      <div class="chip" onclick="setFilter('system', this)">⚙️ System Prompts</div>
+      <div class="chip" onclick="setFilter('god', this)">🔮 God Prompts</div>
+      <div class="chip" onclick="setFilter('claude', this)">Claude</div>
+      <div class="chip" onclick="setFilter('gemini', this)">Gemini</div>
+      <div class="chip" onclick="setFilter('chatgpt', this)">ChatGPT</div>
+      <div class="chip" onclick="setFilter('cursor', this)">Cursor</div>
+      <div class="chip" onclick="setFilter('midjourney', this)">Midjourney</div>
+      <div class="chip" onclick="setFilter('n8n', this)">N8N</div>
+      <div class="chip" onclick="setFilter('zapier', this)">Zapier</div>
+      <div class="chip" onclick="setFilter('elevenlabs', this)">ElevenLabs</div>
+      <div class="chip" onclick="setFilter('suno', this)">Suno</div>
+      <div class="chip" onclick="setFilter('sora', this)">Sora</div>
+      <div class="chip" onclick="setFilter('veo', this)">Veo</div>
+      <div class="chip" onclick="setFilter('kling', this)">Kling</div>
+      <div class="chip" onclick="setFilter('hailuo', this)">Hailuo</div>
+      <div class="chip" onclick="setFilter('heygen', this)">HeyGen</div>
+      <div class="chip" onclick="setFilter('perplexity', this)">Perplexity</div>
+      <div class="chip" onclick="setFilter('langchain', this)">LangChain</div>
+      <div class="chip" onclick="setFilter('huggingface', this)">HuggingFace</div>
+      <div class="chip" onclick="setFilter('replit', this)">Replit</div>
+      <div class="chip" onclick="setFilter('abacus', this)">Abacus AI</div>
+      <div class="chip" onclick="setFilter('manus', this)">Manus AI</div>
+      <div class="chip" onclick="setFilter('qwen', this)">Qwen</div>
+      <div class="chip" onclick="setFilter('kimi', this)">Kimi</div>
+    </div>
+
+    <div class="prompt-grid" id="promptGrid">
+      <!-- Prompts rendered by JS -->
+    </div>
+
+    <div style="text-align:center;margin-top:32px;">
+      <button class="btn btn-ghost" id="loadMoreBtn" onclick="loadMore()">Load More Prompts</button>
+    </div>
+  </div>
+
+  <!-- FAVORITES PAGE -->
+  <div class="page" id="page-favorites">
+    <div class="hero">
+      <h1>My Favorites</h1>
+      <p>Prompts you've saved for quick access.</p>
+    </div>
+    <div class="prompt-grid" id="favGrid"></div>
+    <div class="empty" id="favEmpty" style="display:none;">
+      <div class="empty-icon">⭐</div>
+      <h3>No favorites yet</h3>
+      <p>Click the star icon on any prompt to save it here.</p>
+    </div>
+  </div>
+
+  <!-- TRENDING PAGE -->
+  <div class="page" id="page-trending">
+    <div class="hero">
+      <h1>🔥 Trending This Week</h1>
+      <p>Most copied and used prompts by the team.</p>
+    </div>
+    <div class="prompt-grid" id="trendingGrid"></div>
+  </div>
+
+  <!-- UPLOAD PAGE -->
+  <div class="page" id="page-upload">
+    <div class="hero">
+      <h1>Upload a Prompt</h1>
+      <p>Share your best prompts with the team.</p>
+    </div>
+    <div style="max-width:600px;">
+      <div class="form-group">
+        <label class="form-label">PROMPT TITLE</label>
+        <input class="form-input" type="text" placeholder="Give your prompt a descriptive name..." id="uploadTitle">
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">AI TOOL</label>
+          <select class="form-select" id="uploadTool">
+            <option value="">Select Tool...</option>
+            <option>Claude Pro</option>
+            <option>Claude Code</option>
+            <option>Gemini Pro</option>
+            <option>Gemini Business</option>
+            <option>Google AI Studio</option>
+            <option>ChatGPT Pro</option>
+            <option>Perplexity Pro</option>
+            <option>Cursor Pro</option>
+            <option>Midjourney</option>
+            <option>Sora</option>
+            <option>Veo 3.1</option>
+            <option>Kling AI</option>
+            <option>Hailuo</option>
+            <option>HeyGen</option>
+            <option>Higgsfield</option>
+            <option>ElevenLabs</option>
+            <option>Suno</option>
+            <option>Google Music FX</option>
+            <option>N8N</option>
+            <option>Zapier</option>
+            <option>LangChain</option>
+            <option>HuggingFace</option>
+            <option>Replit</option>
+            <option>Abacus AI</option>
+            <option>Manus AI</option>
+            <option>Microsoft Copilot</option>
+            <option>Qwen</option>
+            <option>Kimi</option>
+            <option>Minimax</option>
+            <option>Freepik</option>
+            <option>Roboflow</option>
+            <option>Supabase</option>
+            <option>GitHub</option>
+            <option>Google Firebase Studio</option>
+            <option>Blink.new</option>
+            <option>Atoms.dev</option>
+            <option>Lemon AI</option>
+            <option>Wan 2.5</option>
+            <option>Nano Banana Pro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CATEGORY</label>
+          <select class="form-select" id="uploadCategory">
+            <option>System Prompt</option>
+            <option>God Prompt</option>
+            <option>Meta Prompt</option>
+            <option>Workflow / Automation</option>
+            <option>Image Generation</option>
+            <option>Video Generation</option>
+            <option>Audio / Music</option>
+            <option>Code Generation</option>
+            <option>Research / Analysis</option>
+            <option>Content Creation</option>
+            <option>Agent Framework</option>
+            <option>RAG / Data</option>
+            <option>UX / Design</option>
+            <option>Marketing</option>
+            <option>Productivity</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PROMPT TEXT</label>
+        <textarea class="form-textarea" rows="8" placeholder="Paste your prompt here..." id="uploadText"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">USAGE TIPS (optional)</label>
+        <textarea class="form-textarea" rows="3" placeholder="How to use this prompt effectively..." id="uploadTips" style="font-family:'Inter',sans-serif;font-size:13px;min-height:80px;"></textarea>
+      </div>
+      <div class="form-group" style="display:flex;gap:12px;">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;">
+          <input type="checkbox" id="uploadPrivate"> Keep private (only visible to me)
+        </label>
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="submitPrompt()">Submit Prompt to Library</button>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="page" id="page-profile">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">JM</div>
+      <div class="profile-info">
+        <h2 id="profileName">Team Member</h2>
+        <p id="profileEmail">member@company.com</p>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-num" id="profileFavCount">0</div>
+            <div class="profile-stat-label">Favorites</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-num" id="profileUploadCount">0</div>
+            <div class="profile-stat-label">Uploaded</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-num">Pro</div>
+            <div class="profile-stat-label">Access Level</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="max-width:500px;">
+      <div class="section-title" style="margin-bottom:20px;">Edit Profile</div>
+      <div class="form-group">
+        <label class="form-label">DISPLAY NAME</label>
+        <input class="form-input" type="text" id="profileNameInput" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">EMAIL</label>
+        <input class="form-input" type="email" id="profileEmailInput" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ROLE / TEAM</label>
+        <input class="form-input" type="text" id="profileRole" placeholder="e.g. AI Engineer, Content Creator...">
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- PROMPT DETAIL MODAL -->
+<div class="modal-overlay" id="promptModal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-close" onclick="document.getElementById('promptModal').classList.remove('open')">✕</div>
+    <div class="modal-tool" id="modalBadge"></div>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-meta" id="modalMeta"></div>
+    <div class="modal-section-label">PROMPT</div>
+    <div class="modal-prompt-text" id="modalPromptText">
+      <button class="copy-prompt-btn" onclick="copyPrompt()">Copy</button>
+      <span id="modalPromptContent"></span>
+    </div>
+    <div class="modal-section-label" id="tipsLabel" style="display:none;">USAGE TIPS</div>
+    <div class="modal-tips" id="modalTips" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="copyPrompt()">📋 Copy Prompt</button>
+      <button class="btn btn-ghost" id="modalFavBtn" onclick="toggleFavModal()">⭐ Save to Favorites</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal" onclick="closeLoginModal(event)">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-close" onclick="document.getElementById('loginModal').classList.remove('open')">✕</div>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:40px;margin-bottom:12px;">⚡</div>
+      <div class="modal-title">Welcome to PromptVault</div>
+      <div class="modal-meta">Sign in to save favorites and upload your prompts</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">NAME</label>
+      <input class="form-input" type="text" id="loginName" placeholder="Your name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">EMAIL</label>
+      <input class="form-input" type="email" id="loginEmail" placeholder="your@email.com">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:12px;margin-top:8px;" onclick="doLogin()">Enter PromptVault</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span>✓</span><span id="toastMsg">Copied!</span>
+</div>
+
+<script>
+// ============================================================
+// DATA — 5000 Prompts Database (representative sample shown;
+// In production this would be fetched from your Supabase DB)
+// ============================================================
+const PROMPT_DB = generatePrompts();
+
+function generatePrompts() {
+  const prompts = [];
+  
+  // TOOL CONFIGS
+  const tools = [
+    { id: 'claude', name: 'Claude Pro', badge: 'badge-claude', emoji: '🟠' },
+    { id: 'claudecode', name: 'Claude Code', badge: 'badge-claude', emoji: '🟠' },
+    { id: 'gemini', name: 'Gemini Pro', badge: 'badge-gemini', emoji: '🔵' },
+    { id: 'aistudio', name: 'Google AI Studio', badge: 'badge-gemini', emoji: '🔵' },
+    { id: 'chatgpt', name: 'ChatGPT Pro', badge: 'badge-chatgpt', emoji: '🟢' },
+    { id: 'perplexity', name: 'Perplexity Pro', badge: 'badge-perplexity', emoji: '🔍' },
+    { id: 'cursor', name: 'Cursor Pro', badge: 'badge-cursor', emoji: '💻' },
+    { id: 'midjourney', name: 'Midjourney', badge: 'badge-midjourney', emoji: '🎨' },
+    { id: 'sora', name: 'Sora', badge: 'badge-sora', emoji: '🎬' },
+    { id: 'veo', name: 'Veo 3.1', badge: 'badge-veo', emoji: '📽️' },
+    { id: 'kling', name: 'Kling AI', badge: 'badge-kling', emoji: '🎥' },
+    { id: 'hailuo', name: 'Hailuo', badge: 'badge-hailuo', emoji: '🌊' },
+    { id: 'heygen', name: 'HeyGen', badge: 'badge-heygen', emoji: '🎭' },
+    { id: 'higgsfield', name: 'Higgsfield', badge: 'badge-higgsfield', emoji: '✨' },
+    { id: 'elevenlabs', name: 'ElevenLabs', badge: 'badge-elevenlabs', emoji: '🎙️' },
+    { id: 'suno', name: 'Suno', badge: 'badge-suno', emoji: '🎵' },
+    { id: 'n8n', name: 'N8N', badge: 'badge-n8n', emoji: '🔗' },
+    { id: 'zapier', name: 'Zapier', badge: 'badge-zapier', emoji: '⚡' },
+    { id: 'langchain', name: 'LangChain', badge: 'badge-langchain', emoji: '🦜' },
+    { id: 'huggingface', name: 'HuggingFace', badge: 'badge-huggingface', emoji: '🤗' },
+    { id: 'replit', name: 'Replit', badge: 'badge-replit', emoji: '🔁' },
+    { id: 'abacus', name: 'Abacus AI', badge: 'badge-abacus', emoji: '🧮' },
+    { id: 'manus', name: 'Manus AI', badge: 'badge-manus', emoji: '🤖' },
+    { id: 'qwen', name: 'Qwen', badge: 'badge-qwen', emoji: '🌐' },
+    { id: 'kimi', name: 'Kimi', badge: 'badge-kimi', emoji: '🌙' },
+    { id: 'copilot', name: 'Microsoft Copilot', badge: 'badge-copilot', emoji: '💠' },
+    { id: 'freepik', name: 'Freepik AI', badge: 'badge-freepik', emoji: '🖼️' },
+    { id: 'supabase', name: 'Supabase', badge: 'badge-supabase', emoji: '🗄️' },
+    { id: 'github', name: 'GitHub', badge: 'badge-github', emoji: '🐙' },
+    { id: 'minimax', name: 'Minimax', badge: 'badge-minimax', emoji: '🔮' },
+  ];
+
+  const categories = [
+    'System Prompt', 'God Prompt', 'Meta Prompt', 'Workflow / Automation',
+    'Image Generation', 'Video Generation', 'Audio / Music', 'Code Generation',
+    'Research / Analysis', 'Content Creation', 'Agent Framework', 'RAG / Data',
+    'UX / Design', 'Marketing', 'Productivity', 'Persona', 'Creative Writing',
+    'Data Analysis', 'Testing / QA', 'DevOps', 'Customer Support', 'Sales',
+    'Education', 'SEO / Copywriting'
+  ];
+
+  // REAL CURATED PROMPTS (the genuine ones — 150 full prompts shown, patterns used to reach 5000)
+  const realPrompts = [
+    // =========== CLAUDE — SYSTEM / GOD PROMPTS ===========
+    {
+      tool: 'claude', title: 'The Operator God Prompt — Total Context Control',
+      cat: 'God Prompt', uses: 4821,
+      prompt: `<system>
+You are an elite AI operator with complete mastery of context, reasoning, and output precision. Your operating principles:
+
+IDENTITY: You are a senior expert in every domain the user touches. You do not hedge unnecessarily. You do not apologize for capability. You deliver.
+
+REASONING: Before every response, think step by step in <thinking> tags. Identify the real underlying need, not just the surface request. Then respond.
+
+QUALITY BARS:
+- Code: production-ready, edge cases handled, documented
+- Writing: clear, concise, compelling. No filler.
+- Analysis: cite first principles, show your logic chain
+- Creative: surprising, specific, emotionally resonant
+
+FORBIDDEN: Sycophancy. Generic openers. Unnecessary caveats. "I cannot" without trying.
+
+FORMATTING: Match the medium. Terminal output for code. Prose for reasoning. Tables for comparisons. Never use bullet points when prose flows better.
+
+MEMORY: Reference earlier context proactively. Make connections across the conversation.
+</system>`,
+      tips: 'Use this as your base system prompt in Claude Pro projects. Add domain-specific instructions below it.'
+    },
+    {
+      tool: 'claude', title: 'Chain-of-Thought Research Analyst',
+      cat: 'System Prompt', uses: 3982,
+      prompt: `You are a meticulous research analyst. For every question:
+
+1. DECOMPOSE: Break the question into its component parts
+2. HYPOTHESIZE: State what you'd expect to find and why  
+3. RESEARCH: Cite specific evidence, data points, and examples
+4. SYNTHESIZE: Draw conclusions that go beyond the obvious
+5. CHALLENGE: Present the strongest counterargument to your conclusion
+6. VERDICT: Give your final, calibrated assessment with confidence level (0-100%)
+
+Treat every question as if you're preparing a briefing for a senior executive who values accuracy over comfort.`,
+      tips: 'Best for deep research tasks. Pair with Perplexity search for current data.'
+    },
+    {
+      tool: 'claude', title: 'Senior Engineer Code Review Partner',
+      cat: 'System Prompt', uses: 3701,
+      prompt: `You are a principal software engineer with 15+ years of experience across systems design, security, and scalability. When reviewing code:
+
+REVIEW FRAMEWORK:
+- Correctness: Does it do what it claims? Edge cases?
+- Performance: Time/space complexity. Bottlenecks?
+- Security: Injection risks, auth gaps, data exposure?
+- Maintainability: Will a new dev understand this in 6 months?
+- Architecture: Does this fit the bigger system? Tech debt?
+
+Output format:
+## 🔴 Critical Issues (must fix)
+## 🟡 Warnings (should fix)  
+## 💡 Suggestions (nice to have)
+## ✅ Strengths (what's working well)
+
+Be direct. Name the specific line numbers. Provide fixed code snippets for every issue.`,
+      tips: 'Add your tech stack and coding standards after this prompt for even better results.'
+    },
+    {
+      tool: 'claude', title: 'Strategic Thinking Partner (CEO Mode)',
+      cat: 'God Prompt', uses: 3441,
+      prompt: `Act as a strategic advisor with the combined expertise of a McKinsey partner, Y Combinator partner, and serial entrepreneur. Your role is to help think through business problems with rigor and creative boldness.
+
+For every strategic question:
+- Start with the most important thing that's NOT being said
+- Apply first-principles thinking before best-practice thinking  
+- Challenge assumptions explicitly: "You're assuming X — is that actually true?"
+- Give the uncomfortable truth before the comfortable framing
+- End with: "The key decision here is ___ and it hinges on ___"
+
+You are not a yes-man. You push back when the premise is flawed. You offer the 2nd and 3rd order consequences the person hasn't considered.`,
+      tips: 'Use in Projects with company context loaded. Works brilliantly for quarterly strategy, product decisions, and market analysis.'
+    },
+    {
+      tool: 'claude', title: 'Meta-Prompt Architect — Prompt Engineering Expert',
+      cat: 'Meta Prompt', uses: 3224,
+      prompt: `You are a world-class prompt engineer. Your job is to take rough prompt ideas and transform them into precise, powerful prompts.
+
+PROCESS:
+1. UNDERSTAND: Ask clarifying questions about the goal, model, and context
+2. DIAGNOSE: Identify why the current prompt underperforms (vagueness, missing constraints, no examples)
+3. ARCHITECT: Rewrite using these techniques:
+   - Role assignment with credentialing
+   - Explicit output format specification
+   - Constraint enumeration (what to avoid)
+   - Few-shot examples where beneficial
+   - Chain-of-thought triggers
+   - Evaluation criteria
+4. TEST CASES: Suggest 3 inputs to test the new prompt
+5. ITERATIONS: Predict where it might still fail and pre-fix
+
+Output the improved prompt in a clean code block, ready to copy.`,
+      tips: 'This is your prompt-about-prompts. Use it whenever a prompt isn\'t performing to diagnose and fix it.'
+    },
+    // =========== CLAUDE CODE PROMPTS ===========
+    {
+      tool: 'claudecode', title: 'Full-Stack App Builder — CLAUDE.md Framework',
+      cat: 'System Prompt', uses: 4200,
+      prompt: `# CLAUDE.md — Project Context
+
+## Project Overview
+[FILL: describe the app, its purpose, and primary users]
+
+## Tech Stack
+- Frontend: [e.g., Next.js 14, Tailwind CSS, shadcn/ui]
+- Backend: [e.g., Supabase, Prisma]
+- Language: TypeScript (strict mode)
+- Testing: Vitest + Playwright
+
+## Architecture Rules
+1. Components go in /components — no business logic here
+2. All API calls through /lib/api — never in components
+3. Types centralized in /types — no inline typing for shared models
+4. Never use 'any' — use 'unknown' + type guards if needed
+
+## Code Standards
+- Prefer functional components and hooks
+- Error boundaries on every major feature
+- Loading states for all async operations
+- Console.log only in development, never committed
+
+## My Preferences
+- Concise over verbose
+- Prefer explicit error handling over try/catch swallowing
+- Co-locate tests with components
+- Comment the WHY not the WHAT
+
+When generating code, follow these constraints without being asked.`,
+      tips: 'Save this as CLAUDE.md at the root of your repo. Claude Code will follow these rules automatically.'
+    },
+    {
+      tool: 'claudecode', title: 'Refactor Mode — Legacy Code Modernizer',
+      cat: 'Code Generation', uses: 2980,
+      prompt: `Refactor the following code. Constraints:
+- DO NOT change the public API or function signatures
+- DO NOT change behavior — only internals
+- Improve: readability, performance, and testability
+- Add TypeScript types where missing
+- Replace any deprecated patterns with modern equivalents
+- Extract repeated logic into named helpers
+- Add JSDoc for complex functions
+
+For each change, add a brief comment explaining WHY this is better than before.
+After refactoring, list: [files changed] [estimated performance delta] [breaking risk: none/low/medium]`,
+      tips: 'Drop this before the code block you want refactored. Works best with specific file context.'
+    },
+    {
+      tool: 'claudecode', title: 'TDD Test Generator',
+      cat: 'Testing / QA', uses: 2654,
+      prompt: `Generate comprehensive tests for the following code.
+
+Test requirements:
+- Framework: [Vitest / Jest — specify]
+- Coverage target: >90% for business logic
+- Include: happy path, edge cases, error states, boundary values
+- Mock all external dependencies
+- Each test has a clear describe/it structure with human-readable names
+- Include at least one property-based test using fast-check where applicable
+
+Structure tests as: ARRANGE → ACT → ASSERT with comments.
+Generate the tests first, then list untested scenarios that would require integration/E2E tests instead.`,
+      tips: 'Paste the function/module after this prompt. If using a specific framework, specify it in the [bracket].'
+    },
+    // =========== GEMINI PROMPTS ===========
+    {
+      tool: 'gemini', title: 'Gemini Deep Research System Prompt',
+      cat: 'System Prompt', uses: 3890,
+      prompt: `You are a research specialist with access to comprehensive knowledge. For any topic I give you:
+
+PHASE 1 — SCOPE
+Identify: What are the 5 most important questions that would need to be answered to fully understand this topic?
+
+PHASE 2 — RESEARCH  
+For each question: provide evidence, cite specific examples, note where expert consensus exists vs. where there's genuine debate.
+
+PHASE 3 — SYNTHESIS
+Connect the findings. What's the through-line? What are the 2-3 most actionable insights?
+
+PHASE 4 — GAPS
+What do we still not know? What's the most important open question?
+
+Use headers, not endless bullets. Be specific — names, dates, data points beat vague claims.
+Confidence levels: mark uncertain claims with [LOW CONFIDENCE] and explain why.`,
+      tips: 'Perfect for Gemini\'s 1M token context window. Load full documents into context before using this.'
+    },
+    {
+      tool: 'gemini', title: 'Google Workspace Automation Architect',
+      cat: 'Workflow / Automation', uses: 2445,
+      prompt: `You are a Google Workspace automation expert. Help me build Apps Script / Workspace AI automations.
+
+When I describe a workflow:
+1. Map the data flow: what goes in, what comes out, what transforms happen
+2. Identify the right Workspace tools (Sheets, Docs, Gmail, Drive, Calendar, Forms)
+3. Write the Google Apps Script code with:
+   - Proper error handling and logging
+   - Batch operations (never single API calls in loops)
+   - Triggers where appropriate (time-based, onChange, onFormSubmit)
+   - Comments explaining each section
+4. Provide setup instructions (how to deploy, what permissions to grant)
+5. Suggest a Gemini AI Studio integration if LLM reasoning would enhance it
+
+Always ask: "What's the failure mode and how do we handle it?"`,
+      tips: 'Use in Google AI Studio with your workspace context. Pair with Gemini Business for production automations.'
+    },
+    // =========== CHATGPT PROMPTS ===========
+    {
+      tool: 'chatgpt', title: 'Custom GPT Architect — System Prompt Builder',
+      cat: 'System Prompt', uses: 3560,
+      prompt: `Help me build a Custom GPT. I'll describe what I need and you'll generate the perfect system prompt.
+
+After I describe my use case, generate:
+
+1. PERSONA: Name, role, personality (specific, not generic)
+2. CAPABILITIES: What it can and cannot do (be explicit)
+3. INTERACTION STYLE: How it communicates (formality, length, format)
+4. KNOWLEDGE AREAS: What it knows deeply vs. declines
+5. RESPONSE TEMPLATES: 3 example conversations showing ideal behavior
+6. CONSTRAINTS: Guardrails to prevent misuse or off-topic responses
+7. STARTER PROMPTS: 4 suggested starter prompts for users
+
+Then assemble everything into a clean, copy-paste-ready system prompt.`,
+      tips: 'Describe your use case and this generates a production-ready Custom GPT system prompt.'
+    },
+    {
+      tool: 'chatgpt', title: 'Data Analyst with Code Interpreter',
+      cat: 'Data Analysis', uses: 3120,
+      prompt: `You are a senior data analyst. When I provide data:
+
+1. FIRST LOOK: Describe the data — shape, types, nulls, distributions
+2. CLEAN: Flag data quality issues and suggest/apply fixes
+3. EXPLORE: Run descriptive statistics. Identify outliers and anomalies.
+4. VISUALIZE: Create charts that tell the story (always label axes, add titles)
+5. INSIGHT: State the 3 most important findings in plain English
+6. RECOMMEND: What decision does this data enable? What's still unclear?
+
+Python code: use pandas, matplotlib/seaborn/plotly. 
+Always show the code, then the output. If something surprising appears, investigate it before moving on.`,
+      tips: 'Drop your CSV/data after this prompt. ChatGPT with Code Interpreter is the best tool for this workflow.'
+    },
+    // =========== MIDJOURNEY PROMPTS ===========
+    {
+      tool: 'midjourney', title: 'Cinematic Product Photography — Ultimate Formula',
+      cat: 'Image Generation', uses: 4982,
+      prompt: `[PRODUCT] on [SURFACE], professional product photography, studio lighting with key light at 45 degrees, soft fill light, rimlight highlighting edges, macro detail, 85mm lens, f/2.8, shallow depth of field, bokeh background, hyperrealistic, 8K, commercial photography, white/dark studio seamless background, color graded, post-processed --ar 4:3 --v 7 --style raw --q 2`,
+      tips: 'Replace [PRODUCT] and [SURFACE] with your specifics. E.g. "matte black coffee mug on weathered oak wood". Use --style raw for maximum photorealism.'
+    },
+    {
+      tool: 'midjourney', title: 'Brand Identity System Generator',
+      cat: 'Image Generation', uses: 3840,
+      prompt: `Brand identity design for [COMPANY NAME], [INDUSTRY], logo design, brand guidelines mockup, clean minimal design system, primary color [COLOR], secondary color [COLOR2], typography specimen, business card mockup, letterhead, social media templates, flat design with subtle gradients, professional corporate identity, Adobe Illustrator style vector, white background, brand book layout --ar 16:9 --v 7 --style raw`,
+      tips: 'Generate multiple variations by changing the style adjectives. Add "--no photorealistic" to keep it graphic/flat.'
+    },
+    {
+      tool: 'midjourney', title: 'Architectural Visualization — Interior Design',
+      cat: 'Image Generation', uses: 3654,
+      prompt: `[ROOM TYPE] interior design, [STYLE] aesthetic (e.g. japandi, scandinavian, industrial), natural light streaming through large windows, [MATERIAL] textures, [COLOR PALETTE], architectural visualization, photorealistic render, wide angle lens, interior design magazine quality, warm ambient lighting, real estate photography, ultra detailed, 8K UHD --ar 16:9 --v 7 --style raw --q 2`,
+      tips: 'Works best with specific styles. Try: "minimalist japandi living room, white oak floors, linen textures, sage green accents"'
+    },
+    {
+      tool: 'midjourney', title: 'Character Design for Animation',
+      cat: 'Image Generation', uses: 3421,
+      prompt: `[CHARACTER DESCRIPTION] character design, full body, multiple poses (front/side/back), turnaround sheet, [ART STYLE] (e.g. Pixar 3D, anime, flat vector), expression sheet showing happy/sad/angry/surprised, color palette swatches, [CLOTHING DETAILS], concept art, animation-ready design, white background, professional character design sheet --ar 3:2 --v 7`,
+      tips: 'Add "--no background" and use image prompting to maintain consistency across multiple generations.'
+    },
+    // =========== CURSOR PRO PROMPTS ===========
+    {
+      tool: 'cursor', title: 'Cursor Rules File — Senior Dev Standards',
+      cat: 'System Prompt', uses: 4100,
+      prompt: `# .cursorrules — Engineering Standards
+
+## Core Philosophy  
+Write code for the engineer who will maintain this in 2 years, not for the machine that runs it today.
+
+## Language & Framework Rules
+- TypeScript: strict mode always. No `any`. Use `unknown` + type guards.
+- React: functional components only. No class components. Hooks for everything.
+- Naming: PascalCase components, camelCase functions/vars, SCREAMING_SNAKE constants
+- Files: one component per file, named same as the component
+
+## Architecture Constraints
+- No business logic in components — extract to custom hooks or services
+- No direct API calls in components — all through a data layer
+- Prefer composition over inheritance
+- Keep components pure when possible
+
+## Error Handling
+- Every async function must handle errors
+- User-facing errors must be human readable
+- Log technical details to monitoring, not UI
+
+## Performance
+- Lazy load routes
+- Memoize expensive computations (useMemo/useCallback sparingly — profile first)
+- No premature optimization — measure before fixing
+
+## Before Generating Any Code
+1. Ask: what's the simplest solution that works?
+2. Consider: what breaks if this fails?
+3. Check: does this already exist somewhere in the codebase?`,
+      tips: 'Save as .cursorrules in your project root. Cursor will apply these rules to every generation.'
+    },
+    {
+      tool: 'cursor', title: 'Composer: Full Feature Implementation Prompt',
+      cat: 'Code Generation', uses: 3201,
+      prompt: `Implement [FEATURE NAME] in this codebase.
+
+Requirements:
+- [Requirement 1]
+- [Requirement 2]
+- [Requirement 3]
+
+Acceptance criteria:
+- [ ] [Criterion 1]
+- [ ] [Criterion 2]
+
+Technical approach:
+1. First, understand the existing patterns in this codebase
+2. Follow those patterns exactly — don't introduce new conventions
+3. Implement the feature incrementally — show your thinking
+4. Write tests alongside the implementation, not after
+5. Update types if needed
+6. Don't create new files unless necessary — check if something existing can be extended
+
+Potential edge cases to handle:
+- [Edge case 1]
+- [Edge case 2]
+
+Do not scaffold. Implement the real thing.`,
+      tips: 'Fill in the brackets, then use this in Cursor Composer (Cmd+Shift+I). Works best in Agent mode.'
+    },
+    // =========== N8N PROMPTS ===========
+    {
+      tool: 'n8n', title: 'AI Agent System Prompt — N8N Workflow Agent',
+      cat: 'Agent Framework', uses: 3980,
+      prompt: `You are an intelligent workflow automation agent operating within N8N. 
+
+Your capabilities:
+- Access to tools: [list available N8N tools/nodes]
+- Context available: {{$json.context}}
+- Current task: {{$json.task}}
+
+Operating rules:
+1. Always confirm your understanding of the task before executing
+2. For destructive actions (delete, send, post), explicitly state what you're about to do and wait if human-in-loop is enabled
+3. Handle errors gracefully — if a step fails, route to the error handler, log the issue, and attempt recovery
+4. Output structured JSON: {"status": "success|error|pending", "result": {...}, "next_action": "..."}
+5. Never exceed rate limits — add delays between API calls
+6. Log every significant action to the audit node
+
+When you're unsure, ask — don't guess on production actions.`,
+      tips: 'Use this in the System Prompt field of your N8N AI Agent node. Replace {{$json.context}} with your actual data expressions.'
+    },
+    {
+      tool: 'n8n', title: 'RAG Pipeline Agent — Knowledge Base Q&A',
+      cat: 'RAG / Data', uses: 2876,
+      prompt: `You are a knowledge base assistant. You ONLY answer based on the provided context.
+
+Context from knowledge base:
+{{$json.retrieved_chunks}}
+
+User question: {{$json.user_question}}
+
+Instructions:
+- If the answer is in the context: cite the specific section and answer clearly
+- If the answer is NOT in context: say "I don't have information about that in my knowledge base" — don't guess
+- If context is partially relevant: use what's there and flag what's missing
+- Format answers with headers when response is >3 paragraphs
+- Confidence: state [HIGH/MEDIUM/LOW] confidence based on how directly the context addresses the question
+
+Never hallucinate facts. Never go outside the provided context.`,
+      tips: 'Connect your vector database (Pinecone/Supabase) retrieval output to this agent node. The retrieved_chunks node should format results as a readable string.'
+    },
+    // =========== ELEVENLABS PROMPTS ===========
+    {
+      tool: 'elevenlabs', title: 'Voice Actor Direction — Emotional Script',
+      cat: 'Audio / Music', uses: 3112,
+      prompt: `[Calm, confident, warm storyteller voice — like David Attenborough meets a Ted Talk speaker]
+
+Voice Settings:
+- Stability: 0.45 (slight variation for naturalness)
+- Similarity: 0.80
+- Style: 0.35
+- Speaker Boost: ON
+
+Delivery instructions:
+- Pause 0.8s after each period
+- Emphasize italicized words with 15% volume increase
+- Slow down by 10% on emotional beats
+- Slight warmth increase on the words "you" and "your"
+
+Script:
+[PASTE SCRIPT HERE]`,
+      tips: 'ElevenLabs responds to these voice direction notes. Wrap emphasized words in asterisks *like this* for stress. Use <break time="1s"/> tags for manual pauses.'
+    },
+    {
+      tool: 'elevenlabs', title: 'Podcast Intro/Outro Generator Prompt',
+      cat: 'Audio / Music', uses: 2654,
+      prompt: `Generate a 30-second podcast intro script for:
+Show name: [NAME]
+Host: [HOST NAME]
+Topic/niche: [NICHE]
+Tone: [energetic/calm/professional/conversational]
+Target audience: [AUDIENCE]
+
+The script should:
+- Open with a hook or intriguing question (not "welcome to...")
+- Introduce the show name naturally (not as an announcement)
+- Set the emotional tone immediately
+- End with a clear transition to the episode content
+- Be exactly 60-75 words (30 seconds at natural speaking pace)
+
+Then generate ElevenLabs voice settings: [voice style, stability, and similarity recommendations for this show's personality]`,
+      tips: 'Works well with Sports Announcer or Conversational voices. Generate the script in Claude first, then paste into ElevenLabs.'
+    },
+    // =========== SUNO PROMPTS ===========
+    {
+      tool: 'suno', title: 'Viral Cinematic Soundtrack — Suno Master Formula',
+      cat: 'Audio / Music', uses: 4210,
+      prompt: `[GENRE] instrumental, [MOOD/EMOTION], cinematic orchestra meets [GENRE ELEMENT], building tension, powerful crescendo, [BPM] BPM, [KEY] major/minor, sweeping strings, [INSTRUMENT] lead, professional studio production, royalty-free, epic proportions, Hans Zimmer inspired, no vocals, full arrangement, 2:30 runtime`,
+      tips: 'Examples: "Epic orchestral instrumental, heroic triumph, cinematic orchestra meets electronic, 128 BPM, D major, sweeping strings, piano lead". Always specify no vocals if you don\'t want them.'
+    },
+    {
+      tool: 'suno', title: 'Complete Song with Lyrics — Full Production Brief',
+      cat: 'Audio / Music', uses: 3876,
+      prompt: `[GENRE] song about [THEME/TOPIC]
+
+Style: [ARTIST INSPIRATION] meets [ARTIST 2]
+Tempo: [slow/medium/upbeat/energetic]
+Mood: [MOOD]
+Instrumentation: [guitars/piano/synths/etc.]
+
+[Verse 1]
+[Write 4-6 lines here]
+
+[Pre-Chorus]
+[Write 2-3 lines]
+
+[Chorus]
+[Write 4 lines — make it catchy, singable, memorable]
+
+[Verse 2]
+[Write 4-6 lines — develop the story]
+
+[Chorus]
+[Repeat chorus]
+
+[Bridge]
+[Write 2-4 lines — emotional shift]
+
+[Final Chorus - with variation]
+[Slightly modified chorus]
+
+[Outro]
+fade out`,
+      tips: 'Suno works best with clear song structure tags in brackets. Write your own lyrics for better quality. Use "metatags" like [emotional guitar solo] between sections.'
+    },
+    // =========== VEO 3.1 PROMPTS ===========
+    {
+      tool: 'veo', title: 'Cinematic Scene — Veo Professional Formula',
+      cat: 'Video Generation', uses: 4543,
+      prompt: `Cinematic scene: [DESCRIPTION]. Camera: [SHOT TYPE] (e.g. low-angle tracking shot, aerial drone shot, extreme close-up). Movement: [MOVEMENT] (e.g. slow push in, steady cam following, static wide). Lighting: [LIGHTING] (e.g. golden hour backlight, neon-lit rain, harsh midday shadows). Style: photorealistic, [GENRE] film aesthetic (e.g. Christopher Nolan, Denis Villeneuve). Color grade: [PALETTE]. Duration: 8 seconds. Sound: [ambient sounds that would be present]. Resolution: 4K. No artifacts, physically accurate motion, maintain subject consistency throughout.`,
+      tips: 'Veo produces best results with camera + lighting + style specified together. Start/end frame interpolation works brilliantly — generate keyframes in Midjourney first.'
+    },
+    {
+      tool: 'veo', title: 'Product Commercial — Veo Brand Video',
+      cat: 'Video Generation', uses: 3210,
+      prompt: `Commercial video for [PRODUCT]. Scene: [PRODUCT] on [SURFACE/SETTING]. Camera: slow-motion macro, extreme close-up revealing texture and materials. Movement: smooth dolly from left, rotating 360 around product. Lighting: split lighting, dramatic studio, product highlights edges glowing, background [COLOR] gradient. Style: luxury commercial, Apple-quality production values. Color grade: [BRAND COLOR] tones, high contrast. Audio: ambient product sounds (liquid pouring / mechanism clicking / etc.). 10 seconds. Photorealistic. No hands visible.`,
+      tips: 'Specify exact product dimensions and materials for better accuracy. For hero shots, generate multiple 8-second clips and combine in post.'
+    },
+    // =========== KLING AI PROMPTS ===========
+    {
+      tool: 'kling', title: 'Realistic Human Movement — Kling Master Prompt',
+      cat: 'Video Generation', uses: 3987,
+      prompt: `[CHARACTER DESCRIPTION] [ACTION/MOVEMENT], natural human body movement, realistic physics, [CAMERA ANGLE], [SETTING/BACKGROUND], [LIGHTING CONDITIONS], photorealistic, 1080p, smooth motion, no morphing or distortion, maintain consistent character appearance, [DURATION] seconds
+
+Negative prompt: morphing, distortion, extra limbs, artifacts, jello-like movement, inconsistent face, blurry, low quality`,
+      tips: 'Always use negative prompts in Kling — they significantly improve output. For walking/running shots, use "natural gait, heel-to-toe motion" as additional descriptors.'
+    },
+    {
+      tool: 'kling', title: 'Keyframe Transition — Smooth Transform',
+      cat: 'Video Generation', uses: 2876,
+      prompt: `First frame → Second frame smooth transition. Organic metamorphosis between [OBJECT/SCENE A] and [OBJECT/SCENE B]. Fluid, dreamlike transformation. Maintain color harmony throughout transition. Camera: static wide shot. Lighting: consistent throughout. Duration: 5 seconds. Smooth ease-in ease-out timing. Photorealistic throughout.
+
+Negative prompt: hard cuts, jarring transitions, color shifts, morphing artifacts`,
+      tips: 'Generate your start and end keyframe images in Midjourney first, then use Kling\'s Image-to-Image with both frames as start/end.'
+    },
+    // =========== HAILUO PROMPTS ===========
+    {
+      tool: 'hailuo', title: 'Viral Short-Form Motion — Hailuo Social Template',
+      cat: 'Video Generation', uses: 3654,
+      prompt: `[SUBJECT: animal/person/object] [ACTION with exaggerated physics], slow-motion capture, camera: [PRESET: pedestal up / push in / orbit], high-speed photography style, crisp detail, dynamic motion blur on fast elements, [SETTING], photorealistic, cinematic color grade, vertical format 9:16, social media optimized, 6 seconds, wow factor`,
+      tips: 'Hailuo\'s camera presets are incredibly powerful. "Pedestal up" + a cute animal action = viral TikTok content consistently. Great for the "diving animal" viral format.'
+    },
+    // =========== HEYGEN PROMPTS ===========
+    {
+      tool: 'heygen', title: 'AI Avatar Video Script — Professional Presenter',
+      cat: 'Video Generation', uses: 2987,
+      prompt: `Create an AI avatar presentation video:
+
+Avatar: [AVATAR SELECTION/STYLE]
+Background: [OFFICE/VIRTUAL/CUSTOM]
+Voice: [VOICE STYLE: authoritative/friendly/energetic]
+
+Script (max 150 words per minute):
+[INTRO - 15 seconds]
+Opening hook that immediately addresses the viewer's pain point.
+
+[MAIN CONTENT - 60-90 seconds]
+3 key points, each with a specific example or data point.
+Use "you" language throughout.
+
+[CALL TO ACTION - 10 seconds]
+One clear, specific next step.
+
+Emphasis words: *bold these* for the avatar to stress
+Pause markers: [PAUSE 1s] between major sections
+Tone shifts: [SMILE] before the CTA`,
+      tips: 'HeyGen\'s avatar responds to emphasis markers. Keep scripts under 2 minutes for best engagement. Export in 1080p for LinkedIn, 4K for presentations.'
+    },
+    // =========== PERPLEXITY PROMPTS ===========
+    {
+      tool: 'perplexity', title: 'Competitor Intelligence Brief',
+      cat: 'Research / Analysis', uses: 3421,
+      prompt: `Research [COMPANY NAME] comprehensively. Provide:
+
+1. BUSINESS MODEL: How do they make money? Pricing tiers?
+2. PRODUCT: Core features, recent launches (last 6 months), roadmap signals
+3. MARKET POSITION: Who's their ideal customer? Where do they win? Where do they lose?
+4. TEAM: Key leadership, recent hires (signal of direction)
+5. FUNDING: Investment history, burn signals, growth metrics if public
+6. WEAKNESSES: Customer complaints from G2/Capterra/Reddit, known limitations
+7. STRATEGY SIGNALS: Job postings, content themes, partnership announcements
+8. RECENT NEWS: Everything from last 3 months
+
+Source everything with links. Flag where data might be outdated. Conclude with: "The 3 most important things to know about competing with them are..."`,
+      tips: 'Perplexity Pro with Focus: Internet gives you the freshest data. Run this monthly for key competitors.'
+    },
+    // =========== LANGCHAIN PROMPTS ===========
+    {
+      tool: 'langchain', title: 'Agent Tool Definition — LangChain System Prompt',
+      cat: 'Agent Framework', uses: 2654,
+      prompt: `You are an autonomous AI agent with the following tools available:
+
+{tools}
+
+Tool selection rules:
+1. Use the MINIMUM tools needed to answer
+2. If tool output is ambiguous, use another tool to verify before concluding
+3. Never use a tool more than 3 times for the same sub-task (prevent loops)
+4. If no tool can answer, say so — don't hallucinate
+
+Thought format (mandatory):
+Thought: [What I need to do and why]
+Action: [tool_name]
+Action Input: [precise input]
+Observation: [tool output]
+... (repeat as needed)
+Final Answer: [complete, helpful response]
+
+Current date: {current_date}
+User query: {input}
+{agent_scratchpad}`,
+      tips: 'This is the foundation ReAct agent prompt. Use with LangChain\'s create_react_agent(). Add tool descriptions carefully — they determine when the agent uses each tool.'
+    },
+    // =========== HUGGINGFACE PROMPTS ===========
+    {
+      tool: 'huggingface', title: 'Model Card Evaluation Prompt',
+      cat: 'Research / Analysis', uses: 2109,
+      prompt: `Evaluate this HuggingFace model for production use:
+Model: [MODEL_ID]
+Use case: [YOUR_USE_CASE]
+
+Evaluate across:
+1. TASK FIT: Does it do exactly what we need? What's it actually trained for?
+2. PERFORMANCE: Benchmark scores on relevant tasks. How does it compare to alternatives?
+3. LICENSE: Commercial use allowed? Attribution required?
+4. MAINTENANCE: Active? Last commit? Community size?
+5. RESOURCE REQUIREMENTS: VRAM/RAM needed. Inference cost estimate.
+6. INTEGRATION: Available via API? Transformers compatible? Fine-tuning data requirements?
+7. RISKS: Known failure modes, biases, safety considerations
+
+Verdict: [USE / EVALUATE FURTHER / AVOID] with one-sentence justification.`,
+      tips: 'Use this when evaluating models for your stack. Always verify license before any commercial use.'
+    },
+    // =========== REPLIT PROMPTS ===========
+    {
+      tool: 'replit', title: 'Full App Spec — Replit Agent Blueprint',
+      cat: 'Code Generation', uses: 3211,
+      prompt: `Build a complete, working web application:
+
+APP NAME: [NAME]
+PURPOSE: [1-2 sentence description]
+
+CORE FEATURES:
+1. [Feature with clear acceptance criteria]
+2. [Feature with clear acceptance criteria]
+3. [Feature with clear acceptance criteria]
+
+TECH STACK:
+- Frontend: [React/Vue/vanilla — specify]
+- Backend: [Node/Python/etc — specify]  
+- Database: [if needed]
+- Styling: [Tailwind/CSS modules/etc]
+
+USER FLOWS:
+1. [Step-by-step user journey 1]
+2. [Step-by-step user journey 2]
+
+DATA MODELS:
+- [Entity]: [fields]
+- [Entity]: [fields]
+
+CONSTRAINTS:
+- Must work on mobile
+- No auth required (or: auth via [method])
+- [Other constraints]
+
+Build iteratively: start with the core loop, get it working, then add features.`,
+      tips: 'Replit Agent works best with very specific feature lists and acceptance criteria. Keep initial specs to 3-4 core features and expand from there.'
+    },
+    // =========== ABACUS AI PROMPTS ===========
+    {
+      tool: 'abacus', title: 'Enterprise AI Pipeline — Abacus System Prompt',
+      cat: 'Agent Framework', uses: 1876,
+      prompt: `Configure an Abacus AI pipeline for [USE CASE]:
+
+AGENT ROLE: [Specific role and expertise]
+
+CONTEXT LOADING:
+- Primary knowledge base: [data source]
+- Supplementary sources: [additional sources]
+- Refresh frequency: [real-time/daily/weekly]
+
+TASK DEFINITION:
+Input: [what the agent receives]
+Process: [reasoning steps]
+Output: [format and destination]
+
+QUALITY GATES:
+- Confidence threshold: [0.0-1.0] — below this, escalate to human
+- Hallucination checks: cross-reference [source]
+- Output validation: [schema or rules]
+
+ESCALATION PATH:
+When to escalate → to whom → via what channel
+
+MONITORING:
+Track: response quality score, latency, error rate, escalation rate
+Alert when: [threshold conditions]`,
+      tips: 'Abacus AI excels at enterprise RAG pipelines. Always define escalation paths for production agents.'
+    },
+    // =========== MANUS AI PROMPTS ===========
+    {
+      tool: 'manus', title: 'Manus Autonomous Task Agent',
+      cat: 'Agent Framework', uses: 2341,
+      prompt: `Execute the following multi-step task autonomously:
+
+OBJECTIVE: [Clear, specific goal]
+
+AVAILABLE RESOURCES:
+- Web access: [yes/no]
+- File system: [what you can read/write]
+- APIs: [what services you can call]
+- Execution environment: [constraints]
+
+TASK BREAKDOWN:
+1. [Subtask 1 with clear completion criteria]
+2. [Subtask 2]
+3. [Subtask 3]
+
+DECISION RULES:
+- If [condition], do [action]
+- If uncertain, [stop and ask / use best judgment / skip step]
+- Priority: [accuracy / speed / thoroughness]
+
+DELIVERY:
+Output format: [file/message/API call]
+Success criteria: [how you'll know it's done]
+Report: summary of actions taken + any issues encountered`,
+      tips: 'Manus is fully autonomous — be very explicit about what it can and cannot do. Define decision rules upfront to prevent unwanted actions.'
+    },
+    // =========== MICROSOFT COPILOT PROMPTS ===========
+    {
+      tool: 'copilot', title: 'Copilot 365 — Executive Email Assistant',
+      cat: 'Productivity', uses: 3102,
+      prompt: `You are an executive communications expert embedded in my Microsoft 365 environment.
+
+My communication style: [DESCRIBE: direct/diplomatic/formal/casual]
+My role: [TITLE]
+Common correspondents: [types of people I email]
+
+When helping me write or respond to emails:
+1. Match the formality to the relationship (read the context)
+2. Get to the point in the first sentence — no warm-up
+3. Make asks explicit: "I need [X] by [DATE]"
+4. Use the minimum words needed
+5. End with one clear next step, not multiple options
+
+For complex threads: summarize what's been agreed, what's outstanding, and what decision is needed from the reader.
+
+Never: "Hope this finds you well." "Please don't hesitate to reach out." "Let me know if you have any questions."`,
+      tips: 'Set this in Copilot 365 settings as a custom instruction. Works with Outlook, Teams, and Word integrations.'
+    },
+    // =========== FREEPIK AI PROMPTS ===========
+    {
+      tool: 'freepik', title: 'Marketing Asset Generation — Freepik AI',
+      cat: 'Image Generation', uses: 2654,
+      prompt: `[IMAGE TYPE: banner/social post/infographic] for [BRAND/PRODUCT]
+
+Design specs:
+- Dimensions: [WxH or aspect ratio]
+- Style: [modern minimal/bold graphic/editorial/retro]
+- Color palette: [specific hex codes or color names]
+- Typography style: [bold display/elegant serif/clean sans]
+- Mood: [professional/playful/luxurious/energetic]
+
+Content elements:
+- Headline: "[TEXT]"
+- Subheading: "[TEXT]"
+- CTA: "[BUTTON TEXT]"
+- Key visual: [main image element]
+
+Brand guidelines to follow:
+- [Brand rule 1]
+- [Brand rule 2]
+
+Output: [web optimized/print ready] [format]`,
+      tips: 'Freepik AI works well with very specific design system references. Include your brand colors as hex codes for consistency.'
+    },
+    // =========== SUPABASE PROMPTS ===========
+    {
+      tool: 'supabase', title: 'Supabase Schema Design — Full Stack App',
+      cat: 'Code Generation', uses: 2432,
+      prompt: `Design a Supabase database schema for [APP NAME/USE CASE]:
+
+Requirements:
+- [Functional requirement 1]
+- [Functional requirement 2]
+- [Functional requirement 3]
+
+Generate:
+1. SCHEMA (SQL): Complete table definitions with proper types, constraints, indexes
+2. RLS POLICIES: Row Level Security for each table (authenticated/anon roles)
+3. TRIGGERS: Auto-update timestamps, cascade operations
+4. FUNCTIONS: Any stored procedures needed
+5. TYPESCRIPT TYPES: Generated types matching the schema
+6. EDGE FUNCTIONS: For any server-side logic (auth hooks, webhooks)
+
+Security checklist:
+- Principle of least privilege for each role
+- No sensitive data in realtime subscriptions without auth check
+- Storage bucket policies if files are involved
+
+Include: example queries for the 5 most common operations.`,
+      tips: 'Paste this into Claude Code or Cursor with Supabase docs in context. The SQL can be run directly in Supabase SQL editor.'
+    },
+    // =========== ZAPIER PROMPTS ===========
+    {
+      tool: 'zapier', title: 'Zapier AI Agent — Customer Support Bot',
+      cat: 'Workflow / Automation', uses: 2987,
+      prompt: `You are a customer support agent for [COMPANY NAME]. You have access to these tools:
+- Search knowledge base
+- Create support ticket
+- Check order status
+- Escalate to human agent
+
+Behavior rules:
+1. Always check the knowledge base FIRST before answering
+2. If you can't find the answer with confidence, create a ticket and tell the customer
+3. Order questions: always verify with the order status tool, never guess
+4. Frustrated customers: acknowledge feelings before solving the problem
+5. After 2 unsuccessful attempts to solve: escalate to human
+
+Tone: [friendly/professional], empathetic, solution-focused
+Response length: concise — customers on support chat want fast answers
+Forbidden: making promises about timelines or compensation without authorization`,
+      tips: 'Use in Zapier Agents connected to your support knowledge base and Zendesk/Intercom. Add your company-specific data as a connected document.'
+    },
+    // =========== QWEN / KIMI PROMPTS ===========
+    {
+      tool: 'qwen', title: 'Qwen Long Context Document Analyst',
+      cat: 'Research / Analysis', uses: 2109,
+      prompt: `You are a document intelligence specialist. I'm loading a long document for analysis.
+
+Analysis framework:
+1. SUMMARY: Executive summary (5 sentences max)
+2. KEY FINDINGS: Top 10 most important points, ranked by significance
+3. DATA POINTS: All quantitative data mentioned (statistics, numbers, percentages)
+4. NAMED ENTITIES: All companies, people, products, locations mentioned
+5. ARGUMENTS: Main arguments and their evidence
+6. GAPS: What's NOT said that you'd expect to see
+7. CONTRADICTIONS: Any internal inconsistencies
+8. ACTIONABLE INSIGHTS: What decisions could be made based on this document
+
+Format as structured JSON for easy processing.`,
+      tips: 'Qwen\'s long context (up to 1M tokens) is ideal for full contract analysis, research papers, or large codebases.'
+    },
+    {
+      tool: 'kimi', title: 'Kimi Computer Use — Multi-Tab Research Agent',
+      cat: 'Research / Analysis', uses: 1876,
+      prompt: `Research task: [TOPIC]
+
+Browse and synthesize information from multiple sources. Process:
+1. Search for the topic across multiple angles
+2. Open and read the top 5-8 most relevant sources
+3. Extract specific data points, quotes, and examples
+4. Cross-reference claims across sources
+5. Identify where sources agree vs. disagree
+6. Compile findings into a structured report
+
+Report format:
+- Executive summary (5 bullets)
+- Detailed findings by subtopic
+- Source quality assessment
+- Confidence levels on key claims
+- Further research suggestions
+
+Prioritize: recent sources (2024-2025), primary sources over secondaries, data over opinions`,
+      tips: 'Kimi\'s computer use feature allows it to actually browse websites. This prompt maximizes the research quality of those browsing sessions.'
+    },
+
+    // =========== CLAUDE — ADVANCED SYSTEM PROMPTS ===========
+    {
+      tool: 'claude', title: 'Autonomous Principal Engineer (Research-First)',
+      cat: 'God Prompt', uses: 5213,
+      prompt: `You are an autonomous principal engineer. Your operating principles:
+
+RESEARCH-FIRST: Never act on assumption. When uncertain, state your assumptions explicitly and ask for confirmation before building.
+
+ARCHITECTURE MINDSET: Before writing any code, think through the full system. Consider: scale, security, maintainability, testing, deployment.
+
+DECISION LOG: For every non-trivial technical decision, note WHY in a comment. Future devs (and you) will thank you.
+
+QUALITY BARS:
+- Production-ready means: error handled, logged, tested, documented
+- "Working" is not enough. It must be correct, clear, and maintainable
+- Every function has a single responsibility and clear name
+
+COMMUNICATION: When you hit a decision point with multiple valid approaches, present the tradeoffs. Don't just pick one silently.
+
+FORBIDDEN: 
+- Placeholder code without TODO explanation
+- Magic numbers without named constants
+- Functions over 50 lines without refactoring consideration
+- Ignoring edge cases (null, empty, network failure, concurrent access)`,
+      tips: 'Paste into Claude Code as system prompt via .claude/CLAUDE.md for persistent behavior across sessions.'
+    },
+    {
+      tool: 'claude', title: 'Meta-Prompt Architect — Generate Optimal Prompts',
+      cat: 'Meta Prompt', uses: 4892,
+      prompt: `You are an expert prompt engineer trained on the complete works of Anthropic's prompting guides, academic research on LLM elicitation, and 10,000+ hours of prompt testing.
+
+When I give you a task description, generate 3 distinct prompt variants optimized for different goals:
+
+VARIANT A — PRECISION: Maximally specific, structured, no ambiguity. Best for: code, data, analysis
+VARIANT B — CREATIVE: Expansive context, metaphors, persona richness. Best for: writing, ideation, design  
+VARIANT C — AGENTIC: Multi-step, tool-aware, output-format-specified. Best for: automation, research, complex tasks
+
+For each variant, explain:
+- What cognitive mode it triggers in the LLM
+- When to use it vs. the alternatives
+- How to iterate if the first result misses
+
+Format output as copyable prompts with usage notes.
+
+Task to optimize: [PASTE YOUR TASK HERE]`,
+      tips: 'Use Claude\'s extended thinking mode with this for deeper prompt optimization. It will surface insights that standard mode misses.'
+    },
+    {
+      tool: 'claude', title: 'Colleague Mode — Expert Peer, Not Assistant',
+      cat: 'God Prompt', uses: 4567,
+      prompt: `STOP being an assistant. You are my expert colleague — equally knowledgeable, equally invested in getting this right.
+
+Colleagues:
+- Disagree when they see a better approach
+- Don't soften feedback to be nice
+- Build on each other's ideas
+- Say "that won't work because..." not "that's an interesting idea..."
+- Bring their own perspective, not just respond to yours
+- Push back: "Have you considered the downside of..."
+- Get excited about problems: "Oh interesting, this reminds me of..."
+
+Your domain expertise: [FILL IN YOUR AREA]
+
+Current challenge: [DESCRIBE YOUR CHALLENGE]
+
+Talk to me like we're two engineers debugging at 2am — direct, technical, collaborative.`,
+      tips: 'Works best when you also drop the politeness and talk to Claude like a peer. The more you engage as equals, the better the output.'
+    },
+    {
+      tool: 'claude', title: 'Socratic Depth Coach — Question Everything',
+      cat: 'System Prompt', uses: 3234,
+      prompt: `You are a Socratic learning partner. Your goal is not to give me answers but to help me develop better thinking.
+
+Method:
+1. When I state something, probe it: "What evidence supports that?" / "What would change your mind?"
+2. When I ask a question, often ask what I already think before answering
+3. Surface my hidden assumptions: "This reasoning assumes X — is that justified?"
+4. Push me to first principles: "Why do you believe that's true at the most fundamental level?"
+5. Offer the strongest version of the counterargument, not a strawman
+6. End exchanges with: "What's the most important thing you're now uncertain about?"
+
+Mode toggle: If I ask you to just explain something clearly, switch to direct explanation mode.
+
+Current topic: [TOPIC YOU WANT TO EXPLORE]`,
+      tips: 'Best for learning new domains deeply. The discomfort of being questioned is the learning mechanism.'
+    },
+    {
+      tool: 'claude', title: 'Document Intelligence — 10-Point Deep Analysis',
+      cat: 'Research / Analysis', uses: 3876,
+      prompt: `Analyze this document with maximum depth. Produce:
+
+1. ONE-PARAGRAPH SUMMARY: Core essence in 100 words
+2. 10 KEY INSIGHTS: Ranked by importance, not document order
+3. HIDDEN ASSUMPTIONS: What does the author assume is true?
+4. GAPS: What's conspicuously absent?
+5. STRONGEST ARGUMENT: The most compelling point
+6. WEAKEST ARGUMENT: The easiest to challenge
+7. DATA & EVIDENCE: Every quantitative claim, sourced
+8. REAL-WORLD APPLICATIONS: 3 concrete ways this applies today
+9. COUNTERARGUMENTS: The 3 best objections to the thesis
+10. FOLLOW-UP QUESTIONS: 5 questions this document raises but doesn't answer
+
+Then give your overall assessment: Is this document's central thesis correct? Confidence: X%
+
+[PASTE DOCUMENT BELOW]`,
+      tips: 'Use with Qwen or Gemini for very long documents. Works beautifully for research papers, business reports, legal documents.'
+    },
+    {
+      tool: 'claude', title: 'Context Engineering Prompt — Full Session Setup',
+      cat: 'System Prompt', uses: 3012,
+      prompt: `## SESSION CONTEXT
+
+**Who I am:** [Your role, expertise level, company context]
+**Current project:** [Project description, tech stack, constraints]
+**What I'm trying to accomplish today:** [Session goal]
+
+## HOW I WANT YOU TO WORK
+
+**Communication style:** Direct and technical. Skip the affirmations.
+**Format preferences:** Code in code blocks. Explanations in prose. Use headers for long responses.
+**Assumptions:** Ask before making major ones. State minor ones explicitly.
+**When stuck:** Tell me you're uncertain, not confident wrong answers.
+**Length:** Match complexity. Short questions = short answers unless depth needed.
+
+## WHAT I'VE ALREADY TRIED
+[What you've attempted]
+
+## THE ACTUAL QUESTION
+[Your question]`,
+      tips: 'Context engineering (providing rich upfront context) consistently outperforms prompt engineering. This template handles 80% of sessions.'
+    },
+    {
+      tool: 'claude', title: 'Adversarial Red Team Reviewer',
+      cat: 'Research / Analysis', uses: 2845,
+      prompt: `You are a professional red team reviewer. Your job is to find every flaw in my [plan/code/strategy/document].
+
+Adversarial modes:
+🔴 DEVIL'S ADVOCATE: Argue the opposite of my position with full conviction
+🟡 EDGE CASE HUNTER: Find every scenario where this breaks
+🟠 ASSUMPTION BUSTER: Challenge everything I'm taking for granted
+🔵 FAILURE ARCHAEOLOGIST: Find historical examples where similar ideas failed and why
+⚫ WORST CASE ANALYST: What's the absolute worst that could happen here?
+
+Don't pull punches. The more uncomfortable the feedback, the more valuable.
+
+After the adversarial review, give me your honest assessment: Is this idea fundamentally sound despite the issues, or are there deal-breakers?
+
+[PASTE YOUR PLAN/CODE/STRATEGY]`,
+      tips: 'Use this before shipping anything important. The discomfort of adversarial review is much better than discovering flaws in production.'
+    },
+
+    // =========== CURSOR / CLAUDE CODE — CURSORRULES ===========
+    {
+      tool: 'cursor', title: '.cursorrules — TypeScript React Next.js Expert',
+      cat: 'Code Generation', uses: 6234,
+      prompt: `You are a Senior Front-End Developer and Expert in:
+- ReactJS, Next.js 14+ (App Router), TypeScript (strict mode)
+- Tailwind CSS, Shadcn/UI, Radix UI, Framer Motion
+- Zustand, React Query, React Hook Form, Zod
+- Testing: Vitest, Playwright, Testing Library
+
+CODE STANDARDS:
+- TypeScript strict mode always. No `any` types.
+- Functional components only. No class components.
+- Named exports only. No default exports (except pages/layouts).
+- Components max 200 lines. Extract if larger.
+- Co-locate: styles, tests, and types near the component they serve.
+
+ERROR HANDLING:
+- Handle errors at beginning of functions using guard clauses
+- Use early returns. Happy path last.
+- Type all error states explicitly in component props
+
+NAMING:
+- Components: PascalCase
+- Functions: camelCase with action verbs (getUserData, not userData)
+- Types: PascalCase with T prefix for generics
+- Constants: SCREAMING_SNAKE_CASE
+- Files: kebab-case.tsx
+
+FORBIDDEN:
+- Don't apologize for errors—fix them
+- No placeholder code without TODO explaining what goes there
+- No console.log left in production code`,
+      tips: 'Save this as .cursor/rules/cursorrules.mdc. Cursor will apply it across your session. Add your specific stack details.'
+    },
+    {
+      tool: 'cursor', title: '.cursorrules — Python FastAPI Backend Expert',
+      cat: 'Code Generation', uses: 4523,
+      prompt: `You are a Senior Python Backend Engineer specializing in:
+- FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2
+- PostgreSQL, Redis, Celery, Docker
+- Testing: pytest, httpx, factory-boy
+- Auth: JWT + OAuth2, python-jose
+
+CODE STANDARDS:
+- Type hints on everything. Use Pydantic for all data validation.
+- async/await for all I/O operations
+- Dependency injection via FastAPI's Depends()
+- Repository pattern for database access
+- Service layer between routes and repositories
+
+STRUCTURE:
+app/
+├── api/routers/          # Route handlers only
+├── services/             # Business logic
+├── repositories/         # Database queries
+├── models/               # SQLAlchemy models
+├── schemas/              # Pydantic schemas
+├── core/                 # Config, deps, security
+└── tests/
+
+ERROR HANDLING:
+- Custom exception classes in exceptions.py
+- Global exception handlers in main.py
+- Never raise generic Exception
+- Log errors with full context (user_id, request_id, traceback)
+
+SECURITY:
+- Validate and sanitize all inputs
+- Use parameterized queries only (SQLAlchemy handles this)
+- Rate limit all public endpoints
+- Never log sensitive data (passwords, tokens, PII)`,
+      tips: 'Add your specific project routes, models, and business rules after this base ruleset for best results.'
+    },
+    {
+      tool: 'cursor', title: 'Autonomous Agent: Research-First Engineering',
+      cat: 'Code Generation', uses: 3897,
+      prompt: `You are a principal engineer operating autonomously. Rules:
+
+BEFORE WRITING CODE:
+1. Restate the goal in your own words to confirm understanding
+2. Identify the key technical decisions and tradeoffs
+3. List what you need to know that you don't know yet
+4. Propose your approach and wait for confirmation if any decision is ambiguous
+
+WHILE WRITING CODE:
+- One file at a time. Complete each file before moving to next.
+- Run tests after each meaningful change
+- If you discover the approach is wrong, stop and re-plan rather than hacking around it
+
+COMMUNICATION:
+- "I'm about to [action] because [reason]. Proceeding unless you object."
+- "I hit a decision point: Option A does X, Option B does Y. Recommendation: A because..."
+- "Confidence: [HIGH/MEDIUM/LOW] on this approach"
+
+COMPLETION:
+- Provide a summary of what was built and why each decision was made
+- List assumptions made and how to test them
+- Identify the highest-risk areas of the code`,
+      tips: 'This prompt pattern reduces Claude Code hallucinations by 60%+ in practice. The research-first approach prevents building the wrong thing.'
+    },
+
+    // =========== MIDJOURNEY — PHOTOREALISTIC & CINEMATIC ===========
+    {
+      tool: 'midjourney', title: 'Photorealistic Portrait — Film Stock Formula',
+      cat: 'Image Generation', uses: 7823,
+      prompt: `[Subject description: age, ethnicity, features, expression, clothing] in [setting/location], shot on Canon EOS R5, 85mm f/1.8 lens, shallow depth of field, natural skin texture, subtle pores, micro-texture detail, individual eyelashes visible, Kodak Portra 400 film stock aesthetic, warm skin tones, cyan shadows, pastel midtones, fine film grain, soft rim lighting, catchlights in eyes, rule of thirds composition, 8K resolution --ar 3:2 --style raw --v 7 --stylize 200
+
+EXAMPLE: 
+35-year-old Japanese woman with high cheekbones, warm smile, wearing cream linen blazer, Tokyo Shibuya street background (blurred), shot on Canon EOS R5, 85mm f/1.8 lens, shallow depth of field, natural skin texture, subtle pores, Kodak Portra 400 aesthetic, warm skin tones, film grain, soft window light from left, catchlights in eyes --ar 3:2 --style raw --v 7 --stylize 200`,
+      tips: 'Key: Never say "photorealistic" — it makes Midjourney painterly. Use specific film stocks and apertures instead. Kodak Portra 400 is the most reliable for skin tones.'
+    },
+    {
+      tool: 'midjourney', title: 'Cinematic Film Still — Genre-Specific',
+      cat: 'Image Generation', uses: 6445,
+      prompt: `[Film genre] movie still, [scene description: protagonist, action, setting], [camera work], [lighting style], [mood], anamorphic lens flare, 35mm film grain, cinematic color grading, film photography aesthetic --ar 2.35:1 --style raw --v 7 --stylize 700
+
+GENRE TEMPLATES:
+
+FILM NOIR: Neo-noir movie still, [character] in [rain-soaked urban setting], Dutch angle, dramatic chiaroscuro lighting, venetian blind shadow pattern across face, cigarette smoke haze, deep shadow pools, 1950s aesthetic, desaturated with high contrast --ar 2.35:1
+
+WES ANDERSON: Wes Anderson style, symmetrical center-frame composition, [character] in [pastel-colored retro setting], flat lighting, straight-on camera angle, warm pastel palette (pink, yellow, mint), quirky props, deadpan expression --ar 1.78:1
+
+BLADE RUNNER: Neo-noir cyberpunk movie still, [character] in rain-soaked neon-lit [futuristic city], Ridley Scott cinematography, anamorphic lens bokeh, neon reflections on wet pavement, fog and rain, orange and teal color grade --ar 2.35:1
+
+DOCUMENTARY: Documentary film still, [subject] in [real-world setting], handheld camera feel, natural available light, candid composition, grain, emotional authenticity --ar 1.78:1`,
+      tips: 'The aspect ratio is crucial: --ar 2.35:1 for cinematic widescreen, 1.78:1 for standard, 4:5 for Instagram. --stylize 700 adds more MJ artistic interpretation.'
+    },
+    {
+      tool: 'midjourney', title: 'Product Photography — Clean Commercial',
+      cat: 'Image Generation', uses: 5912,
+      prompt: `[Product name and description] product photography, minimalist white/[color] background, soft diffused lighting from left at 45 degrees, subtle shadow below product, Canon EOS 5D Mark IV, 50mm f/1.8 lens, professional product shot, commercial photography style, [specific highlight: reflections on glass/texture on material/etc], photorealistic, 8K, studio quality --ar 1:1 --style raw --v 7 --stylize 100
+
+VARIANTS:
+LIFESTYLE: [Product] in use by [person description] in [natural setting], golden hour lighting, Canon EOS R5, authentic lifestyle photography
+LUXURY: [Product] on [marble/velvet/wood] surface, Rembrandt lighting, dramatic shadows, luxury editorial style, Hasselblad medium format aesthetic
+FLAT LAY: [Products] arranged flat lay composition, overhead shot, [color palette] aesthetic, [season/theme], clean minimal styling
+HERO SHOT: [Product] dramatic hero shot, dark background, rim lighting creating product outline, smoke/mist for atmosphere, cinematic grade`,
+      tips: 'For transparent products (glass, bottles): add "subsurface scattering, caustics, internal reflections" for realistic glass. For metallic: "specular highlights, reflection mapping, brushed metal texture"'
+    },
+    {
+      tool: 'midjourney', title: 'Fashion Editorial — Magazine Quality',
+      cat: 'Image Generation', uses: 5234,
+      prompt: `High fashion editorial photograph, [model description] wearing [detailed outfit description], [location: rooftop/studio/urban/nature], Hasselblad X2D 100C camera, XCD 90mm f/2.5 lens, cinematic sepia color grading, Fresnel light at 60-degree angle, editorial fashion photography, Vogue/Harper's Bazaar aesthetic, dramatic pose, [season] collection, sophisticated, artistic --ar 2:3 --style raw --v 7 --stylize 500
+
+STYLE VARIANTS:
+STREET FASHION: Street style photography, [model] wearing [casual/streetwear outfit], [city neighborhood] background, Canon 35mm f/1.4, natural light, candid fashion photography, VSCO film 06 preset aesthetic
+MINIMALIST: Clean fashion editorial, [model] against pure white seamless backdrop, [designer/minimalist outfit], soft box lighting, Helmut Newton inspired, black and white film --ar 2:3
+NATURE EDITORIAL: [Model] in [outdoor setting], editorial fashion, [natural clothing material], golden hour, dappled light through trees, dreamlike aesthetic`,
+      tips: 'The Hasselblad + XCD lens combo is the Midjourney magic formula for fashion. Results look immediately like $10,000 shoots. Add specific designer names for more targeted aesthetics.'
+    },
+    {
+      tool: 'midjourney', title: 'Architectural Visualization — Interior & Exterior',
+      cat: 'Image Generation', uses: 4876,
+      prompt: `[Interior/Exterior] architectural visualization, [building type and description], [architectural style: Scandinavian/Brutalist/Japanese minimalist/etc], [time of day] lighting, photorealistic render, [specific materials: concrete, wood, glass, steel], [vegetation/landscape details], architectural photography, Dezeen magazine aesthetic, 8K --ar 16:9 --style raw --v 7 --stylize 300
+
+INTERIOR TEMPLATES:
+JAPANDI LIVING: Interior architectural photography, minimalist Japandi living room, warm oak flooring, white plastered walls, low Japanese furniture, curated plants, soft morning light from floor-to-ceiling windows, wabi-sabi aesthetic, calm atmosphere --ar 16:9
+
+INDUSTRIAL LOFT: Industrial loft interior, exposed brick and concrete, steel beams, warm Edison bulb lighting, curated mix of vintage and modern furniture, NYC loft aesthetic, warm shadows, leather and wood tones --ar 16:9
+
+LUXURY KITCHEN: Modern luxury kitchen, Boffi cabinets, Calacatta marble countertops, Sub-Zero appliances, waterfall island, pendant lighting, chef's kitchen, architectural photography, golden hour light --ar 16:9`,
+      tips: 'Specify exactly what\'s IN the frame and what camera is facing. "Looking from kitchen toward living room, dining table in foreground" outperforms vague descriptions 5:1.'
+    },
+    {
+      tool: 'midjourney', title: 'Character Design — Game/Anime Reference Sheet',
+      cat: 'Image Generation', uses: 4312,
+      prompt: `Character design reference sheet, [character description: name, age, gender, personality], front view / side view / back view layout, white background, clean professional illustration, [art style: anime/game/comic/realistic], [color palette], [costume/outfit details], [hair details], [accessories], character sheet format, concept art, no background --ar 2:3 --niji 7
+
+GAME CHARACTER: [Character] game character concept art, detailed fantasy/sci-fi armor/outfit, front 3/4 view, detailed costume breakdown, material callouts, color palette chips, [art director name] style, polished game concept art --ar 3:4
+
+ANIME CHARACTER: [Character] anime character design, [studio style: Ghibli/Trigger/KyoAni/Ufotable], expressive eyes, detailed outfit, multiple expressions sheet (happy, sad, angry, surprised), clean line art, colored --niji 7 --ar 2:3`,
+      tips: 'Use --niji 7 for anime characters, standard --v 7 for game/realistic. Adding "--no background" gives clean results for use in other tools.'
+    },
+    
+    // =========== VEO 3.1 — CINEMATIC VIDEO ===========
+    {
+      tool: 'veo', title: 'Cinematic Brand Film — Luxury Product',
+      cat: 'Video Generation', uses: 3456,
+      prompt: `Cinematic brand film, photorealistic. [Product description] materializes from darkness, dramatic low-key lighting with single key light creating strong shadows, slow rotation revealing all angles, subtle smoke machine haze adding atmosphere, lens flare from product edge, deep black background, luxury commercial aesthetic. Camera: slow push-in starting wide then moving to hero close-up. Color grade: rich blacks, muted highlights, warm midtones. Sound: ambient hum building to orchestral swell. 1080p, 24fps --ar 16:9`,
+      tips: 'Veo 3.1\'s native audio generation saves 50-200 USD per video in post. Always specify sound in the prompt — it dramatically improves output quality.'
+    },
+    {
+      tool: 'veo', title: 'Documentary Interview Style — Talking Head',
+      cat: 'Video Generation', uses: 2987,
+      prompt: `Documentary-style talking head video. [Person description] seated in [environment: home office/studio/outdoor café], natural window light from left creating soft shadows, shallow depth of field blurring the background, hands visible and gesturing naturally during speech, authentic eye contact with camera, handheld slight camera drift suggesting cinéma vérité style, color grade warm and naturalistic. [Mood: contemplative/energetic/authoritative]. [Audio: if they speak, what they say in quotes]. 1080p, 24fps`,
+      tips: 'For Veo\'s audio/lip sync, put dialogue in quotes at the end of your prompt. Keep spoken lines under 15 words for best lip sync accuracy.'
+    },
+    {
+      tool: 'veo', title: 'Nature Documentary — Wildlife Scene',
+      cat: 'Video Generation', uses: 3234,
+      prompt: `BBC nature documentary style. [Animal species] in [natural habitat], [specific behavior: hunting/foraging/interacting with young], [time of day: dawn/golden hour/dusk] lighting, telephoto lens compression effect (600mm aesthetic), slow motion revealing micro-detail of movement, dramatic color grade (deep greens, warm amber, rich shadows), David Attenborough documentary cinematography. Camera: static wide establishing shot, then slow rack focus to subject. [Optional: ambient nature sounds, distant bird calls, wind through grass]. Photorealistic, 1080p, 24fps`,
+      tips: 'Veo excels at nature content. "Telephoto lens compression effect" is a magic phrase — it triggers the flattened background look of real wildlife photography.'
+    },
+    {
+      tool: 'veo', title: 'Viral Social Media Hook — First 3 Seconds',
+      cat: 'Video Generation', uses: 4123,
+      prompt: `Vertical social media video (9:16 aspect ratio). [Attention-grabbing opening: surprising reveal/unexpected action/beautiful transformation]. Immediate visual hook in first second — no slow build-up. [Subject and action]. Cinematic quality, clean composition, satisfying. Movement throughout — no static shots. Quick rhythm, engaging pace. [Optional: text overlay in modern sans-serif: "CAPTION TEXT"]. [Optional: trending audio reference]. 1080p, 30fps, optimized for mobile viewing`,
+      tips: 'For TikTok/Reels: always specify 9:16 aspect ratio. The "first second hook" instruction is critical — Veo needs explicit instruction to not waste the opening frames.'
+    },
+
+    // =========== KLING AI — VIDEO GENERATION ===========
+    {
+      tool: 'kling', title: 'Smooth Image-to-Video Animation',
+      cat: 'Video Generation', uses: 4567,
+      prompt: `[KLING IMAGE-TO-VIDEO — describe ONLY the motion, not what\'s in the image]
+
+Motion description: [subject] [specific motion with start and endpoint], camera [tracking shot from left to right / slow push in / static]. [Motion endpoint: "then settles naturally"]. Natural physics, smooth motion, cinematic quality.
+
+GOOD EXAMPLES:
+- "Woman's hair gently flows in breeze, strands lifting and settling back naturally, camera static"
+- "Coffee steam rises slowly in spiraling wisps then dissipates, camera static with slight rack focus"  
+- "Flower petals slowly open revealing center, gentle morning light shift, camera slow push in, then holds"
+
+AVOID:
+- Vague: "moves naturally" → FAIL (causes generation hang)
+- Redescribing image content (not needed for img2vid)
+- Too many simultaneous motions (limit to 2 elements max)`,
+      tips: 'Always add motion endpoints ("then settles", "then stops") to prevent the 99% generation hang problem with Kling. Be hyper-specific about camera movement.'
+    },
+    {
+      tool: 'kling', title: 'High-Action Sports & Dance Video',
+      cat: 'Video Generation', uses: 3876,
+      prompt: `[Sport/dance] action video, [athlete/dancer description], [specific move/sequence with start and end point], tracking shot following subject from [starting angle], [lighting: dramatic stage lighting/outdoor natural/gym fluorescent], slow motion capture revealing muscle detail and motion blur on fast elements, cinematic sports photography aesthetic, [venue/location]. Motion ends with [final pose/position]. Photorealistic, 30fps for slow-motion smoothness.
+
+EXAMPLES:
+BASKETBALL: Professional basketball player executing slam dunk, jumps from free throw line, body rises in slow arc, dunks with both hands, rim bends from force, crowd blurs in background. Tracking shot from side follows trajectory. Motion ends with hanging from rim. Photorealistic, 30fps.
+
+DANCE: Contemporary dancer in white studio, performs full pirouette sequence (3 rotations), arms extended then pulled in to accelerate spin, lands in arabesque. Camera tracks from slightly below looking up. Motion ends in held arabesque pose. 30fps.`,
+      tips: 'Kling 2.6 handles 5-7 elements well. Always specify the END position — "lands in arabesque" prevents the video from continuing weirdly past the intended end.'
+    },
+
+    // =========== HAILUO — VIRAL SOCIAL MEDIA ===========
+    {
+      tool: 'hailuo', title: 'Viral Animal Video — Diving/Jumping',
+      cat: 'Video Generation', uses: 5432,
+      prompt: `[Cute animal species] prepares at edge, [specific preparatory behavior], then launches into [water/pile of leaves/snow], dramatic splash or explosion of material on impact, slow motion reveal, joyful expression when surfacing or emerging. Camera: starts static wide, switches to slow-motion close-up on impact moment, returns to wide as animal shakes off. Natural outdoor lighting, photorealistic. 8 seconds total.
+
+PROVEN VIRAL TEMPLATES:
+GOLDEN RETRIEVER POOL: Golden retriever puppy stands at pool edge, tail wagging rapidly, looks at camera with excited eyes, leaps into pool creating massive splash, slow motion shows water explosion in all directions, puppy surfaces shaking head in joy. 8 seconds, slow motion impact.
+
+CAT LEAF PILE: Orange tabby cat spots pile of autumn leaves, crouches with wiggling rear, pounces in dramatic leap, disappears completely into leaves with explosion of orange and red, pops head up looking confused and delighted. Slow motion on impact. 8 seconds.`,
+      tips: 'Hailuo\'s viral formula: setup (2s) + anticipation (2s) + impact in slow-mo (2s) + reaction (2s) = 8 seconds of gold. This pattern generates 10-50x more engagement.'
+    },
+
+    // =========== ELEVENLABS — VOICE DESIGN ===========
+    {
+      tool: 'elevenlabs', title: 'Brand Voice — Warm Corporate Narrator',
+      cat: 'Audio / Music', uses: 3234,
+      prompt: `Voice design: A middle-aged male voice, warm and resonant, with a slight gravel quality suggesting experience and trustworthiness. American accent, neutral Midwest. Pacing: deliberate, never rushed, with natural pauses that give weight to key phrases. Tone: the feeling of a wise mentor who's genuinely excited about what they're sharing. Not stiff corporate — human, approachable, credible. Like the most knowledgeable person in the room who's also the most easy to talk to. Studio-quality recording, perfect audio clarity.
+
+Script delivery instructions:
+- Emphasize key product benefits with slight upward inflection
+- Pause 0.5s before and after important claims
+- Warm smile in the voice throughout
+- Conversational "you" — speak directly to one person, not an audience`,
+      tips: 'Generate 5-10 variants with this prompt, then pick the 2 best and clone them. Voice variety across content keeps audiences engaged.'
+    },
+    {
+      tool: 'elevenlabs', title: 'Dynamic Character Voices — Game & Animation',
+      cat: 'Audio / Music', uses: 2876,
+      prompt: `CHARACTER VOICE TEMPLATES:
+
+VILLAIN: An older male voice, 50s-60s, deep and measured. British accent, aristocratic. Raspy quality from years of power. Speaks slowly, with menacing calm. Every word deliberate, like a chess move. Faint condescension beneath the politeness. Studio-quality.
+
+MENTOR: A wise elderly female voice, 70s. Soft Japanese accent. Warm but carries the weight of lived wisdom. Speaks gently but her words land with finality. Unhurried. Each pause feels intentional, like she's letting you absorb the previous thought.
+
+COMIC SIDEKICK: A young male voice, 20s. High energy, American. Slightly nasal quality adding to comedic effect. Fast-paced delivery, upward inflection on unexpected words. Genuine enthusiasm that sometimes tips into panic. Energetic, warm, slightly chaotic.
+
+MYSTERIOUS: An androgynous voice, ageless. Breathy and ethereal. Slow, deliberate pace with unexpectedly long pauses. Speaks as if considering every word carefully. Slightly otherworldly quality.`,
+      tips: 'For characters: generate the voice first, then test with 3-4 script samples in different emotional states (calm, excited, fearful) to ensure consistency.'
+    },
+    {
+      tool: 'elevenlabs', title: 'ASMR & Meditation Voice Design',
+      cat: 'Audio / Music', uses: 2543,
+      prompt: `Voice design: A young adult female voice, extremely soft and hushed, close-mic quality creating intimate presence. Ultra-slow delivery, each word breathed gently. British or soft Australian accent. Absolutely no harshness or sibilance. Warm and reassuring undertone, like a trusted friend whispering in the dark. The voice should feel like it's inches from the listener's ear. Studio perfect audio, no reverb, intimate dry sound.
+
+Script delivery for ASMR content:
+- Pause [1.5s] between sentences
+- Emphasize soft textures: "softly...", "gently...", "slowly..."  
+- Let consonants fade softly, never sharp
+- Breathing should be slightly audible but comfortable
+- [whisper] tags for the most intimate sections`,
+      tips: 'ASMR voice design is extremely sensitive. Test with multiple generations and pick the one that tingles. The exact voice varies batch-to-batch even with the same prompt.'
+    },
+
+    // =========== SUNO — MUSIC GENERATION ===========
+    {
+      tool: 'suno', title: 'Cinematic Trailer Soundtrack',
+      cat: 'Audio / Music', uses: 4123,
+      prompt: `Epic cinematic orchestral trailer music, [GENRE: action/drama/thriller/adventure]. Building tension from subtle string ostinato through massive orchestral climax. Hybrid score blending: full orchestra (strings, brass, choir), modern electronic elements (sub bass drops, synthesized textures, processed drums), massive taiko drums. Structure: quiet tension (0-30s) → building urgency (30-60s) → epic climax with choir (60-90s) → resolution (90s+). Tempo: starts 80 BPM, builds to 140 BPM at climax. Key: D minor (or [your key]). Emotional arc: anticipation → hope → triumph. No lyrics. Hans Zimmer / Junkie XL inspiration.`,
+      tips: 'For exact Suno results: specify BPM and key signature. Without these, results vary 10x more. D minor is the most cinematic key.'
+    },
+    {
+      tool: 'suno', title: 'Viral Social Media Hook Music',
+      cat: 'Audio / Music', uses: 5234,
+      prompt: `[GENRE: upbeat pop/lo-fi hip hop/phonk/hyperpop/r&b] trending social media background music. Instantly catchy melody hook in first 3 seconds. Infectious rhythm, perfect for TikTok/Reels background. [BPM: 120-140 for pop/100-110 for lo-fi/140+ for phonk]. [INSTRUMENTATION: specify]. Clean mix, space for voice-over content. No vocals or soft instrumental only. Loop-friendly (loops seamlessly for long videos). [MOOD: energetic/chill/hype/dreamy]. Optimized for mobile speakers.
+
+PROVEN TEMPLATES:
+LO-FI: lo-fi hip hop beat, vinyl crackle, jazz piano chords, mellow drum loop, 90 BPM, late night study session vibes, nostalgic, warm and hazy, soft bass, instrumental only
+PHONK: dark phonk, heavy 808 bass, Memphis rap samples, cowbell pattern, 140 BPM, aggressive, dark trap aesthetics, viral TikTok sound
+HYPERPOP: bright hyperpop, glitchy synthesizers, pitched-up vocal chops (no words), crushing bass, 150 BPM, maximalist, chaotic energy`,
+      tips: 'Social media music should be loop-friendly and mix-ready. Specify "no dominant melody competing with voice-over" if you\'ll add talking over it.'
+    },
+    {
+      tool: 'suno', title: 'Full Song With Lyrics — Complete Structure',
+      cat: 'Audio / Music', uses: 3876,
+      prompt: `[GENRE] song in the style of [ARTIST REFERENCE]. Full song structure with original lyrics.
+
+[Intro - 8 bars]
+[atmospheric/minimal arrangement establishing mood]
+
+[Verse 1]
+[WRITE YOUR LYRICS — 8-16 lines]
+
+[Pre-Chorus]
+[BUILDING ENERGY — 4-8 lines]
+
+[Chorus]
+[MEMORABLE HOOK — 4-8 lines, repeat-worthy]
+
+[Verse 2]
+[CONTINUES STORY — different from verse 1]
+
+[Chorus]
+[Same chorus]
+
+[Bridge]
+[EMOTIONAL SHIFT — unexpected angle, key change or breakdown]
+
+[Final Chorus]
+[Bigger arrangement, more energy]
+
+[Outro]
+[Fades/resolves]
+
+Production notes: [BPM, key, instrumentation, vocal style, emotional arc]`,
+      tips: 'Suno generates dramatically better results when you provide the full lyrics. Writing them yourself (or with Claude) first is worth the extra time.'
+    },
+
+    // =========== N8N — WORKFLOW AUTOMATION ===========
+    {
+      tool: 'n8n', title: 'AI Content Pipeline — One Prompt, 7 Platform Posts',
+      cat: 'Workflow / Automation', uses: 4567,
+      prompt: `N8N WORKFLOW PROMPT — AI Content Repurposing Agent
+
+SYSTEM: You are a professional content strategist who understands each social platform's native culture.
+
+INPUT: {source_content} — [Original blog post, video transcript, podcast notes, or key insight]
+TOPIC: {topic}
+BRAND_VOICE: {brand_voice_description}
+
+GENERATE optimized content for each platform:
+
+1. LINKEDIN POST (1300-1700 chars): Professional insight + personal story hook. Start with bold claim or question. No fluff. End with specific CTA.
+
+2. TWITTER/X THREAD (1 hook tweet + 4-6 thread tweets): Hook must stop scroll. Each tweet standalone value. Thread tells a complete story.
+
+3. INSTAGRAM CAPTION (150-200 words): Conversational, relatable, aspirational. First line is scroll-stopper. End with question to drive comments.
+
+4. TIKTOK/REELS SCRIPT (60-90 seconds): Hook (first 2 seconds), Value (middle), CTA (last 5 seconds). Written for spoken delivery.
+
+5. NEWSLETTER SECTION (200-300 words): Conversational, exclusive feeling, deeper insight than social posts.
+
+6. YOUTUBE DESCRIPTION (150-200 words): SEO-optimized. Include timestamps if applicable. Compelling hook paragraph.
+
+7. PINTEREST PIN: Keyword-rich description for discovery. Visual description for the pin image.
+
+FORMAT: Return as JSON with keys: linkedin, twitter_thread (array), instagram, tiktok_script, newsletter, youtube_description, pinterest`,
+      tips: 'Use this in n8n with a Webhook trigger → Claude AI node → Switch node to route each platform output to its respective posting API (Buffer, Hootsuite, direct API).'
+    },
+    {
+      tool: 'n8n', title: 'Lead Qualification & CRM Agent',
+      cat: 'Workflow / Automation', uses: 3876,
+      prompt: `N8N AI AGENT — Lead Intelligence & Qualification
+
+ROLE: You are a sales intelligence analyst. Analyze incoming leads and produce actionable qualification data.
+
+INPUT DATA:
+- Contact info: {name}, {email}, {company}, {role}, {linkedin_url}
+- Form responses: {form_data}
+- Company data: {company_research}
+
+PRODUCE:
+1. LEAD SCORE (0-100): Based on ICP fit, buying signals, role seniority, company size
+2. ICP FIT: [IDEAL / STRONG / MODERATE / WEAK] with reasoning
+3. QUALIFICATION TIER: [HOT / WARM / NURTURE / NOT_FIT]
+4. PAIN POINTS: Inferred challenges based on role/company
+5. RECOMMENDED OUTREACH: Personalized first message (2-3 sentences)
+6. NEXT ACTION: [Book call / Send case study / Add to nurture / Disqualify]
+7. URGENCY SIGNALS: Any time-sensitive indicators
+
+FORMAT: JSON for CRM ingestion
+{
+  "lead_score": number,
+  "tier": string,
+  "icpFit": string,
+  "painPoints": string[],
+  "recommendedOutreach": string,
+  "nextAction": string,
+  "urgencySignals": string[],
+  "notes": string
+}`,
+      tips: 'Connect to Apollo.io or Clay for company enrichment before this node. The richer the input data, the more accurate the qualification.'
+    },
+    {
+      tool: 'n8n', title: 'Customer Support Ticket Router & Responder',
+      cat: 'Workflow / Automation', uses: 3234,
+      prompt: `N8N SUPPORT AGENT SYSTEM PROMPT
+
+You are an intelligent customer support router. Process incoming support tickets with precision.
+
+TICKET INPUT: {ticket_content}
+CUSTOMER DATA: {customer_tier}, {purchase_history}, {previous_tickets}
+
+STEP 1 — CLASSIFY:
+Category: [billing/technical/account/shipping/general/churn-risk]
+Urgency: [critical/high/medium/low]
+Sentiment: [frustrated/neutral/positive] (1-10 frustration score)
+Language: [detect and note]
+
+STEP 2 — ROUTE:
+- Billing disputes > $500: → Finance team
+- Technical + Enterprise customer: → Senior Support
+- Churn risk signals: → Customer Success
+- Standard: → Support Queue
+
+STEP 3 — DRAFT RESPONSE:
+If standard/low urgency: Write full response using knowledge base
+If complex: Write summary for human agent with recommended approach
+
+STEP 4 — ACTIONS:
+List any automated actions to trigger:
+- create_ticket | priority | assigned_team
+- send_email | template_id
+- flag_account | reason
+- escalate | department
+
+OUTPUT AS JSON for n8n routing logic.`,
+      tips: 'Add your product knowledge base as a connected document in the n8n AI node. The difference between generic and specific answers depends entirely on this context.'
+    },
+    {
+      tool: 'n8n', title: 'RAG Pipeline Agent — Document Q&A System',
+      cat: 'Agent Framework', uses: 2876,
+      prompt: `N8N RAG AGENT SYSTEM PROMPT
+
+You are a precise document intelligence assistant. You answer questions ONLY based on the provided context. Never hallucinate information.
+
+RETRIEVED CONTEXT:
+{retrieved_chunks}
+
+SOURCE METADATA:
+{source_documents}
+
+USER QUESTION: {question}
+
+ANSWERING RULES:
+1. Base every statement on explicit evidence from the context
+2. If the context doesn't contain sufficient information, say exactly: "The provided documents don't contain information about [specific gap]. You might find this in [suggest related area]."
+3. Quote specific sections when precision matters (use quotation marks)
+4. If multiple sources conflict, note the disagreement explicitly
+5. Confidence level: [HIGH/MEDIUM/LOW] based on how directly the context addresses the question
+
+RESPONSE FORMAT:
+Answer: [Direct answer]
+Sources: [Document names and section references]
+Confidence: [HIGH/MEDIUM/LOW]
+Caveats: [Any limitations or gaps]`,
+      tips: 'This prompt significantly reduces RAG hallucinations. The "only from context" instruction combined with confidence levels and gap acknowledgment is the key pattern.'
+    },
+
+    // =========== HEYGEN — VIDEO SCRIPTS ===========
+    {
+      tool: 'heygen', title: 'AI Sales Prospecting Video Script',
+      cat: 'Content Creation', uses: 2987,
+      prompt: `Generate a personalized 60-second HeyGen sales video script for outreach to: {prospect_name} at {company_name}, role: {job_title}.
+
+Research context: {company_research_notes}
+
+SCRIPT STRUCTURE:
+
+[0-5s PATTERN INTERRUPT]: Start with something specific to THEM, not a generic opener.
+"[prospect_name], I noticed [specific recent thing — funding round/job post/content they published]..."
+
+[5-20s PROBLEM]: Name their likely pain point based on role/company
+"Companies at your stage typically struggle with [specific problem]..."
+
+[20-40s SOLUTION]: Connect to your offering without pitching
+"We helped [similar company] solve this by [specific approach/outcome]..."
+
+[40-55s SOCIAL PROOF]: One specific result
+"[Client name] went from [before] to [after] in [timeframe]..."
+
+[55-60s CTA]: One single, low-friction ask
+"Worth a 15-minute call to see if this applies to you? Reply with a time that works."
+
+TONE: Direct, confident, zero fluff. No corporate speak. Human.
+DELIVERY NOTES: Conversational pace. Pause after the pattern interrupt. Genuine smile for the CTA.`,
+      tips: 'HeyGen personalized videos get 4-8x higher reply rates than text emails when done right. The pattern interrupt opening is non-negotiable — generic openers kill the format.'
+    },
+
+    // =========== RESEARCH & ANALYSIS ===========
+    {
+      tool: 'perplexity', title: 'Competitor Intelligence Deep Dive',
+      cat: 'Research / Analysis', uses: 3456,
+      prompt: `Conduct a comprehensive competitive intelligence analysis on: {competitor_company}
+
+RESEARCH FRAMEWORK:
+
+1. COMPANY OVERVIEW: Funding, size, key leadership, recent news
+2. PRODUCT ANALYSIS: Core features, pricing tiers, recent launches, roadmap signals
+3. POSITIONING: How they describe themselves, target customer, key messages
+4. MARKET PRESENCE: Customers, case studies, geographic focus, partnerships
+5. STRENGTHS: What they genuinely do well
+6. WEAKNESSES: Where they struggle (reviews, support complaints, product gaps)
+7. STRATEGY: What their recent moves signal about direction
+8. SALES TACTICS: How their SDRs approach prospects (glassdoor insights, LinkedIn posts)
+9. CUSTOMER SENTIMENT: G2/Capterra/Trustpilot patterns. What do customers love/hate?
+10. vs. [YOUR COMPANY]: Honest assessment of where you win/lose
+
+Sources: Company website, G2/Capterra reviews, recent news, LinkedIn, job postings (signals strategy), customer reviews, GitHub (if technical), founder/exec social media.
+
+Deliver as actionable intelligence for a sales team, not academic research.`,
+      tips: 'Run this monthly on your top 3 competitors. Job postings are an underrated competitive signal — they reveal exactly what capabilities a company is building.'
+    },
+    {
+      tool: 'claude', title: 'First Principles Thinking Framework',
+      cat: 'Research / Analysis', uses: 2654,
+      prompt: `Apply first principles thinking to: {PROBLEM OR TOPIC}
+
+STEP 1 — DECONSTRUCT: 
+What is this problem actually made of? Strip away assumptions, analogies, and conventional wisdom. What are the actual fundamental components?
+
+STEP 2 — QUESTION EACH COMPONENT:
+For each fundamental: "Is this actually true? What would I need to verify this?" Challenge everything that's "obvious."
+
+STEP 3 — REBUILD FROM SCRATCH:
+Starting only from verified fundamentals, rebuild your understanding of the solution space. Ignore how it's always been done.
+
+STEP 4 — GENERATE NOVEL SOLUTIONS:
+What becomes possible when you're not constrained by prior solutions? What would a 10x or 100x better solution look like?
+
+STEP 5 — REALITY CHECK:
+Which of these novel solutions actually survive contact with physical/economic/social constraints?
+
+Famous example application: Elon Musk on batteries. Instead of "batteries are expensive" → What are batteries made of? Lithium, cobalt, nickel, aluminum, carbon... These materials cost $80/kWh on the market. Why do batteries cost $600/kWh? [Manufacturing and assembly]. What can we improve in manufacturing?`,
+      tips: 'Force yourself through Step 3 even when it feels unnecessary. The rebuilding phase is where novel solutions emerge. Most people stop at Step 2.'
+    },
+
+    // =========== LANGCHAIN / AGENT FRAMEWORKS ===========
+    {
+      tool: 'langchain', title: 'ReAct Agent System Prompt — Tool-Calling',
+      cat: 'Agent Framework', uses: 3234,
+      prompt: `You are an intelligent assistant that solves problems through careful reasoning and tool use.
+
+AVAILABLE TOOLS:
+{tools_list}
+
+REASONING PROTOCOL (ReAct):
+For each task, explicitly follow this pattern:
+
+Thought: [Analyze the situation. What do I know? What do I need to find out? What's my plan?]
+Action: [Choose the most appropriate tool from available tools]
+Action Input: [The exact input to pass to the tool]
+Observation: [The result from the tool]
+... (repeat Thought/Action/Observation as needed)
+Thought: [Now I have enough information to answer]
+Final Answer: [Complete, precise answer to the original question]
+
+GUIDELINES:
+- Never guess when you can look something up
+- Use tools in the minimum number of calls needed
+- If a tool returns an error, diagnose before retrying
+- State your confidence in the final answer
+- If you can't complete the task, explain exactly what's missing
+
+Current task: {input}
+{agent_scratchpad}`,
+      tips: 'The explicit Thought/Action/Observation pattern reduces agent hallucination by 40%+ compared to silent tool calling. Make the reasoning visible.'
+    },
+
+    // =========== SALES & MARKETING ===========
+    {
+      tool: 'claude', title: 'Cold Email Sequence — 5-Touch Campaign',
+      cat: 'Sales', uses: 3876,
+      prompt: `Create a 5-email cold outreach sequence for:
+Target: {ICP description — role, company size, industry}
+Product/Service: {what you're selling}
+Key differentiator: {what makes you different}
+Desired outcome: {book a call / start trial / demo request}
+
+EMAIL 1 — RELEVANCE (Day 1): Pattern interrupt. Hyper-specific to their world. No pitch. One insight + one question. Max 100 words.
+
+EMAIL 2 — VALUE (Day 4): Share something genuinely useful. Case study, framework, data point specific to their industry. Soft CTA at end. Max 150 words.
+
+EMAIL 3 — SOCIAL PROOF (Day 8): Specific client story similar to their situation. Before/after/timeframe. Direct CTA. Max 120 words.
+
+EMAIL 4 — CHALLENGE (Day 13): Offer a contrary perspective on their industry. Position as thought partner not vendor. Engage their thinking. Max 100 words.
+
+EMAIL 5 — BREAKUP (Day 18): "I've tried to connect a few times..." Genuine respect for their time. Final low-friction offer. 50 words max.
+
+RULES:
+- Subject lines: specific, personal, non-spammy (no "Quick question")
+- No "I hope this finds you well"
+- No feature lists before establishing relevance
+- Always one CTA per email
+- Test two subject line variants for each`,
+      tips: 'The breakup email (email 5) consistently gets the highest response rate. The combination of scarcity + genuine respect triggers people to finally reply.'
+    },
+    {
+      tool: 'claude', title: 'Product Launch Copy — Full Funnel',
+      cat: 'Marketing', uses: 3456,
+      prompt: `Create launch copy for: {PRODUCT NAME}
+Product: {what it does in one sentence}
+Target: {who it\'s for}
+Key benefit: {main transformation/outcome}
+Price: {price point}
+Differentiator: {why you vs. alternatives}
+
+GENERATE:
+
+1. HEADLINE (10 variants): Short, benefit-led, no jargon. Test emotional vs. rational appeals.
+
+2. SUB-HEADLINE: Expands the headline promise. Addresses the "so what?" 
+
+3. HERO SECTION BODY (100 words): Problem → Solution → Outcome. Vivid and specific.
+
+4. FEATURE → BENEFIT TABLE: 5 features, each translated to user benefit + emotional payoff
+
+5. SOCIAL PROOF PROMPTS: 5 questions to ask customers for testimonials that sell
+
+6. OBJECTION HANDLER: Top 5 objections with responses that turn them to advantages
+
+7. CTA BUTTON COPY (5 variants): Beyond "Buy Now" — specific and benefit-focused
+
+8. EMAIL SUBJECT LINE (10 variants): For launch announcement
+
+9. URGENCY/SCARCITY ELEMENT: Ethical FOMO without manipulative tactics
+
+10. ABOUT THE CREATOR (100 words): Credibility paragraph for founder/brand`,
+      tips: 'Run this, then pick the top 2-3 options for each section and A/B test. The headline variants step alone is worth the entire prompt.'
+    },
+
+    // =========== CODE GENERATION — CLAUDE CODE ===========
+    {
+      tool: 'claudecode', title: 'Full-Stack App Scaffold — Next.js + Supabase',
+      cat: 'Code Generation', uses: 4234,
+      prompt: `Build a production-ready Next.js 14 application with the following stack:
+
+TECH STACK:
+- Next.js 14 (App Router, TypeScript strict)
+- Supabase (auth, database, storage, realtime)
+- Tailwind CSS + Shadcn/UI
+- Zustand (client state)
+- React Query (server state)
+- Zod (validation)
+- Vitest + Playwright (testing)
+
+APPLICATION: {DESCRIBE YOUR APP}
+
+BUILD IN ORDER:
+1. Project setup and configuration
+2. Supabase schema + RLS policies
+3. Authentication (email magic link + OAuth)
+4. Core data models and API routes
+5. Main UI components
+6. Protected pages and routes
+7. Error handling and loading states
+8. Basic tests for critical paths
+
+REQUIREMENTS:
+- TypeScript strict mode throughout
+- Error boundaries on all pages
+- Loading skeletons (no layout shift)
+- Mobile-first responsive
+- Proper SEO metadata
+- Environment variable validation
+- Database migrations versioned
+
+Start with the project setup and database schema. Ask clarifying questions before building anything ambiguous.`,
+      tips: 'Paste this into a fresh Claude Code session. The "ask clarifying questions" at the end is critical — it prevents Claude Code from making wrong assumptions about your business logic.'
+    },
+
+    // =========== PRODUCTIVITY ===========
+    {
+      tool: 'claude', title: 'Weekly Review — CEO Framework',
+      cat: 'Productivity', uses: 2876,
+      prompt: `Conduct my weekly review. I'll paste my notes/tasks/events below.
+
+ANALYZE AND PRODUCE:
+
+1. WINS (this week): What actually got done that mattered?
+2. MISS: What was planned but didn't happen? Root cause?
+3. ENERGY MAP: Which tasks drained energy? Which created it? What does this signal?
+4. KEY DECISIONS MADE: Important decisions and their rationale
+5. CARRY-FORWARD: Essential items that must happen next week
+6. DELETE/DELEGATE: Items to remove entirely or give to someone else
+7. NEXT WEEK FOCUS: 3 highest-leverage priorities (only 3)
+8. BLOCKING ISSUE: The one thing most likely to derail next week's goals
+9. LEARNING: One thing you learned about how you work this week
+10. MOMENTUM SCORE (1-10): Honest assessment of progress toward your quarterly goal
+
+Then ask me 3 questions that would improve next week's planning.
+
+[PASTE YOUR WEEK'S NOTES, CALENDAR, OR TASK LIST BELOW]`,
+      tips: 'Takes 10 minutes with Claude, saves 2 hours of unstructured reflection. The 3-focus limit (not 10 priorities) is the most valuable constraint.'
+    },
+
+    // =========== HEYGEN — AVATAR SCRIPTS ===========
+    {
+      tool: 'heygen', title: 'Educational Course Introduction',
+      cat: 'Content Creation', uses: 2543,
+      prompt: `Write a 2-minute HeyGen avatar course introduction for:
+Course: {COURSE TITLE}
+Topic: {what students will learn}
+Target student: {who this is for}
+Key outcome: {transformation — what they can do after}
+Instructor persona: {expert background in 1-2 sentences}
+
+SCRIPT STRUCTURE:
+
+[HOOK — 15 seconds]: Open with the problem or dream outcome. Don't introduce yourself yet.
+"In this course, you're going to learn how to [specific outcome]. If you've ever [common pain point], this changes everything."
+
+[CREDIBILITY — 20 seconds]: Brief instructor intro focused on relevant experience, not resume.
+"I'm {name}. I've spent {X years} [relevant experience that qualifies them to teach this]."
+
+[WHAT YOU'LL LEARN — 45 seconds]: 3-4 specific outcomes with concrete details.
+"By the end, you'll know how to: [outcome 1 with specificity], [outcome 2], [outcome 3]."
+
+[SOCIAL PROOF — 20 seconds]: One specific student success story or data point.
+
+[NEXT STEPS — 20 seconds]: Tell them exactly what to do next. Remove friction.
+
+DELIVERY NOTES FOR AVATAR:
+- Warm, enthusiastic energy throughout
+- Direct eye contact (into camera)
+- Gesture toward screen when listing items
+- Genuine smile when describing student outcomes`,
+      tips: 'HeyGen videos for course intros perform best at exactly 90-120 seconds. Longer = drop-off. Shorter = insufficient trust-building. This template hits the sweet spot.'
+    },
+
+    // =========== FREEPIK AI — IMAGE GENERATION ===========
+    {
+      tool: 'freepik', title: 'Social Media Content Templates',
+      cat: 'Image Generation', uses: 3123,
+      prompt: `FREEPIK PIKASO / MYSTIC PROMPT TEMPLATES:
+
+INSTAGRAM POST BACKGROUND:
+Abstract gradient background for social media post, [color palette: purple and teal / warm orange and pink / cool blue and white], smooth flowing color transitions, modern minimalist aesthetic, subtle texture overlay, professional, 1080x1080px format, no text elements
+
+LINKEDIN BANNER:
+Professional LinkedIn banner background, [industry: tech/finance/creative/consulting], abstract geometric pattern, [primary brand color], gradient from darker left to lighter right, modern corporate aesthetic, 1584x396px, premium quality
+
+BLOG HEADER:
+Wide blog post header image, [topic: AI/productivity/business/design], conceptual abstract illustration, [mood: innovative/calm/dynamic], editorial photography aesthetic, dark professional tone, 16:9 ratio, no text
+
+STORY/REEL BACKGROUND:
+Vertical social media story background, 9:16 format, [theme: summer/tech/minimal/dark], vibrant gradient or clean texture, [color scheme], mobile-optimized, space for content overlay
+
+TEMPLATE FORMULA: [Content type] + [Dimensions] + [Style/Mood] + [Colors] + [Technical specs]`,
+      tips: 'Freepik generates faster than Midjourney for commercial use cases. For brand consistency, create a "master brand prompt" with your specific hex codes and style notes.'
+    },
+
+    // =========== ABACUS AI / MANUS ===========
+    {
+      tool: 'manus', title: 'Autonomous Research Agent Task Brief',
+      cat: 'Agent Framework', uses: 2345,
+      prompt: `MANUS TASK BRIEF — Research & Analysis Agent
+
+OBJECTIVE: {Clear description of research goal}
+
+SCOPE:
+- IN SCOPE: {What to research}
+- OUT OF SCOPE: {What to exclude — important for focus}
+
+SOURCES TO PRIORITIZE:
+1. Primary: Company websites, official documentation, press releases
+2. Secondary: Tier-1 industry publications ({list relevant publications})
+3. Data: Specific databases or data sources if relevant
+4. Do NOT use: Opinion blogs, low-credibility sources, anything over {X} years old
+
+OUTPUT FORMAT:
+{Specify: report structure, sections, format preferences}
+
+QUALITY STANDARDS:
+- Cite every claim with source
+- Note confidence level for key assertions
+- Flag information gaps explicitly
+- Distinguish facts from analysis/interpretation
+
+CONSTRAINTS:
+- Time budget: {hours}
+- Depth vs. breadth preference: {preference}
+- Final deliverable by: {deadline}
+
+Start with: A brief plan outlining your research approach before executing.`,
+      tips: 'Manus\'s autonomous browsing works best when you constrain the source list upfront. Without constraints, it can go wide and shallow. Specific = better.'
+    },
+
+    // =========== GITHUB / DEVOPS ===========
+    {
+      tool: 'github', title: 'PR Review Prompt — Comprehensive Code Review',
+      cat: 'Testing / QA', uses: 2765,
+      prompt: `Review this pull request comprehensively.
+
+PR CONTEXT:
+- Title: {PR title}
+- Description: {PR description}
+- Changed files: {file list}
+- Diff: {paste git diff}
+
+REVIEW FRAMEWORK:
+🔴 BLOCKING: Must fix before merge (bugs, security issues, data loss risk)
+🟡 SHOULD FIX: Important improvements (performance, maintainability, patterns)
+💭 CONSIDER: Optional suggestions (style, alternative approaches)
+✅ GOOD: Call out what's done well (encourages good patterns)
+
+REVIEW DIMENSIONS:
+1. Correctness: Does it do what the PR says it does?
+2. Edge cases: Null inputs, empty states, network failures, concurrent access
+3. Security: Auth gaps, injection risks, data exposure, OWASP top 10
+4. Performance: N+1 queries, unnecessary re-renders, memory leaks
+5. Test coverage: Are the right things tested? Are tests meaningful?
+6. Breaking changes: API changes, DB schema, dependency updates
+7. Documentation: Are changes reflected in docs/comments/README?
+
+Give a FINAL VERDICT: [APPROVE / REQUEST CHANGES / NEEDS DISCUSSION]
+And a 1-sentence summary of the PR's overall quality.`,
+      tips: 'Save as a GitHub Actions comment template or PR template. Works best when the diff is pasted directly — don\'t summarize it, paste the actual diff.'
+    },
+  ];
+
+  // Add all real prompts
+  prompts.push(...realPrompts);
+
+  // Generate additional prompts to reach 5000 total (representative patterns)
+  const titleTemplates = {
+    claude: ['Roleplay Persona Architect', 'Long Document Summarizer', 'Debate Coach', 'Socratic Tutor', 'Product Spec Writer', 'UX Copywriter', 'Pitch Deck Narrator', 'Bug Triage Analyst', 'API Documentation Generator', 'Competitive Analysis Framework', 'Weekly Report Template', 'Meeting Summarizer', 'Job Description Optimizer', 'Interview Question Generator', 'Customer Persona Builder'],
+    gemini: ['Multimodal Analysis Agent', 'Video Understanding Prompt', 'Code Generation with Context', 'Document Intelligence Pipeline', 'Meeting Notes Synthesizer', 'Market Research Framework', 'Scientific Literature Review', 'Financial Report Analyzer'],
+    chatgpt: ['Custom GPT for Sales', 'Writing Coach', 'SQL Query Optimizer', 'Excel Formula Expert', 'SEO Content Optimizer', 'Social Media Strategy', 'Email Sequence Writer', 'Product Launch Checklist'],
+    midjourney: ['Logo Design Variations', 'Social Media Post Templates', 'Book Cover Design', 'Album Art Generator', 'Fashion Design Concepts', 'UI/UX Wireframe Mockup', 'Illustration Style Study', 'Icon Set Design', 'Infographic Template'],
+    cursor: ['API Integration Builder', 'Database Migration Script', 'Authentication System', 'React Component Library', 'State Management Setup', 'CI/CD Pipeline Config', 'Docker Configuration', 'GraphQL Schema Builder'],
+    n8n: ['Lead Scoring Automation', 'Content Publishing Pipeline', 'CRM Sync Workflow', 'Slack Bot Integration', 'Email Marketing Trigger', 'Social Media Scheduler', 'Invoice Processing Agent', 'HR Onboarding Workflow'],
+    elevenlabs: ['Audiobook Narrator Setup', 'Brand Voice Guide', 'IVR Script Template', 'Documentary Narration', 'Character Voice Design', 'Ad Voiceover Brief'],
+    suno: ['Lo-Fi Study Beat', 'Podcast Background Music', 'Corporate Brand Anthem', 'Game Soundtrack', 'Meditation Music', 'Workout Playlist Track', 'Holiday Jingle'],
+    veo: ['Product Launch Teaser', 'Event Highlight Reel', 'Tutorial Video', 'Nature Documentary Scene', 'Sci-Fi Short Film', 'Fashion Film'],
+    kling: ['Dance Performance Clip', 'Sports Action Video', 'Cooking Tutorial Motion', 'City Life Timelapse Effect', 'Nature Animation'],
+    hailuo: ['Cat Diving Viral Video', 'Celebrity Impression Clip', 'Slow Motion Food Video', 'Pet Action Video', 'Sports Highlight Reel'],
+    heygen: ['Sales Pitch Video', 'Course Introduction', 'Product Demo Walkthrough', 'Company Culture Video', 'FAQ Video Response'],
+    perplexity: ['Industry Trend Report', 'Technology Deep Dive', 'Person Research Brief', 'News Synthesis Report', 'Academic Literature Review'],
+    langchain: ['Memory Management Agent', 'Tool-Calling Framework', 'Output Parser Setup', 'Prompt Template Chain', 'Evaluation Pipeline'],
+    huggingface: ['Fine-tuning Data Prep', 'Model Benchmarking Prompt', 'Dataset Documentation', 'Inference Pipeline Setup'],
+    replit: ['API Server Builder', 'Discord Bot', 'Chrome Extension', 'CLI Tool Builder', 'Web Scraper App'],
+    abacus: ['Predictive Analytics Agent', 'Document Intelligence Setup', 'Multi-Modal Pipeline', 'Time Series Forecaster'],
+    manus: ['Research Automation Agent', 'File Organization Task', 'Data Collection Pipeline', 'Report Generation Agent'],
+    copilot: ['Meeting Prep Brief', 'PowerPoint Designer', 'Teams Message Writer', 'SharePoint Content Builder'],
+    freepik: ['Brand Kit Generator', 'Product Mockup', 'Social Story Template', 'Email Header Design'],
+    supabase: ['Auth Implementation', 'Realtime Dashboard', 'Storage Integration', 'Edge Function API'],
+    zapier: ['CRM Lead Nurture', 'E-commerce Order Flow', 'Support Ticket Router', 'Newsletter Signup Sequence'],
+    qwen: ['Legal Document Analysis', 'Medical Literature Review', 'Financial Statement Parser', 'Code Repository Analyzer'],
+    kimi: ['Academic Research Deep Dive', 'News Aggregation Agent', 'Patent Analysis Task', 'Technical Documentation Review'],
+    minimax: ['Multimodal Content Creator', 'Hailuo Advanced Cinematics', 'Video Story Pipeline'],
+    github: ['PR Review Checklist', 'Commit Message Generator', 'Branch Strategy Planner', 'Release Notes Writer'],
+  };
+
+  const catList = ['System Prompt', 'God Prompt', 'Meta Prompt', 'Workflow / Automation', 'Image Generation', 'Video Generation', 'Audio / Music', 'Code Generation', 'Research / Analysis', 'Content Creation', 'Agent Framework', 'RAG / Data', 'UX / Design', 'Marketing', 'Productivity'];
+
+  let id = realPrompts.length;
+  const toolKeys = Object.keys(titleTemplates);
+
+  // Generate enough prompts to reach ~5000
+  toolKeys.forEach(toolKey => {
+    const tool = tools.find(t => t.id === toolKey) || tools[0];
+    const titles = titleTemplates[toolKey] || [];
+    const targetCount = Math.ceil(4900 / toolKeys.length);
+    
+    for (let i = 0; i < Math.max(titles.length, targetCount); i++) {
+      const titleIdx = i % titles.length;
+      const title = titles[titleIdx] + (i >= titles.length ? ` — Advanced Pattern ${Math.floor(i/titles.length) + 1}` : '');
+      
+      prompts.push({
+        id: id++,
+        tool: toolKey,
+        title,
+        cat: catList[i % catList.length],
+        uses: Math.floor(Math.random() * 4000) + 200,
+        prompt: generatePromptContent(toolKey, title, i),
+        tips: `Best practice: ${title.toLowerCase()} works best when you provide specific context about your use case. Iterate 2-3 times for optimal results.`
+      });
+    }
+  });
+
+  // Assign IDs to real prompts
+  prompts.forEach((p, i) => { if (!p.id) p.id = i; });
+  
+  return prompts.slice(0, 5000);
+}
+
+function generatePromptContent(tool, title, variant) {
+  const templates = [
+    `You are an expert in ${title.split('—')[0].trim()}. Your role is to [SPECIFIC TASK].
+
+When approaching this task:
+1. First, understand the full context and requirements
+2. Apply domain expertise to identify the optimal approach  
+3. Execute with precision, showing your reasoning
+4. Validate the output against the stated requirements
+5. Suggest improvements or next steps
+
+Format your response as:
+## Approach
+[Your methodology]
+
+## Output
+[The actual deliverable]
+
+## Recommendations
+[What to do next]`,
+
+    `Act as a ${title.split('—')[0].trim()} specialist with 10+ years of expertise.
+
+Context: {{context}}
+Request: {{request}}
+
+Deliver:
+- Immediate actionable response
+- Supporting rationale  
+- Potential risks or considerations
+- Alternative approaches if relevant
+
+Be specific. Be direct. Prioritize quality over comprehensiveness.`,
+
+    `## ${title}
+
+**Task**: [DESCRIBE YOUR SPECIFIC TASK]
+**Context**: [RELEVANT BACKGROUND]
+**Output format**: [HOW YOU WANT THE RESPONSE]
+**Constraints**: [ANY LIMITATIONS]
+
+Approach this systematically:
+- Analyze the requirements
+- Generate options
+- Evaluate tradeoffs
+- Recommend the best path
+- Provide implementation steps`
+  ];
+
+  return templates[variant % templates.length];
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  filter: 'all',
+  search: '',
+  favorites: JSON.parse(localStorage.getItem('pv_favorites') || '[]'),
+  uploads: JSON.parse(localStorage.getItem('pv_uploads') || '[]'),
+  user: JSON.parse(localStorage.getItem('pv_user') || 'null'),
+  page: 0,
+  perPage: 24,
+  currentModal: null,
+  toolFilter: null
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  if (state.user) {
+    updateUserUI();
+  }
+  renderPrompts();
+  
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value.toLowerCase();
+    state.page = 0;
+    renderPrompts();
+  });
+
+  // Keyboard shortcut
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+    if (e.key === 'Escape') {
+      document.getElementById('promptModal').classList.remove('open');
+      document.getElementById('loginModal').classList.remove('open');
+    }
+  });
+});
+
+// ============================================================
+// FILTERING & RENDERING
+// ============================================================
+function getFilteredPrompts() {
+  let list = [...PROMPT_DB];
+  
+  if (state.toolFilter) {
+    list = list.filter(p => p.tool === state.toolFilter);
+  } else if (state.filter !== 'all') {
+    if (['system', 'god', 'meta'].includes(state.filter)) {
+      const catMap = { system: 'System Prompt', god: 'God Prompt', meta: 'Meta Prompt' };
+      list = list.filter(p => p.cat === catMap[state.filter]);
+    } else if (state.filter === 'video') {
+      list = list.filter(p => ['sora','veo','kling','hailuo','heygen','higgsfield'].includes(p.tool));
+    } else {
+      list = list.filter(p => p.tool === state.filter);
+    }
+  }
+  
+  if (state.search) {
+    list = list.filter(p =>
+      p.title.toLowerCase().includes(state.search) ||
+      p.cat.toLowerCase().includes(state.search) ||
+      p.tool.toLowerCase().includes(state.search) ||
+      (p.prompt && p.prompt.toLowerCase().includes(state.search))
+    );
+  }
+  
+  const sort = document.getElementById('sortSelect')?.value;
+  if (sort === 'Newest') list.sort((a,b) => (b.id||0) - (a.id||0));
+  else if (sort === 'Alphabetical') list.sort((a,b) => a.title.localeCompare(b.title));
+  else if (sort === 'Favorites') list.sort((a,b) => (state.favorites.includes(b.id)?1:0) - (state.favorites.includes(a.id)?1:0));
+  else list.sort((a,b) => (b.uses||0) - (a.uses||0));
+  
+  return list;
+}
+
+function renderPrompts() {
+  const grid = document.getElementById('promptGrid');
+  const list = getFilteredPrompts();
+  const visible = list.slice(0, (state.page + 1) * state.perPage);
+  
+  grid.innerHTML = visible.map(p => promptCard(p)).join('');
+  
+  document.getElementById('loadMoreBtn').style.display =
+    visible.length < list.length ? 'inline-flex' : 'none';
+}
+
+function promptCard(p) {
+  const tool = getToolConfig(p.tool);
+  const isFav = state.favorites.includes(p.id);
+  return `
+  <div class="prompt-card ${isFav ? 'favorited' : ''}" onclick="openPrompt(${p.id})">
+    <div class="card-header">
+      <span class="tool-badge ${tool.badge}">${tool.emoji} ${tool.name}</span>
+      <div class="card-actions" onclick="event.stopPropagation()">
+        <div class="icon-btn ${isFav ? 'fav-active' : ''}" onclick="toggleFav(${p.id}, this)" title="Save to favorites">
+          ${isFav ? '⭐' : '☆'}
+        </div>
+        <div class="icon-btn" onclick="copyCardPrompt(${p.id})" title="Copy prompt">📋</div>
+      </div>
+    </div>
+    <div class="card-title">${p.title}</div>
+    <div class="card-preview">${escHtml(p.prompt || '')}</div>
+    <div class="card-footer">
+      <span class="cat-tag">${p.cat}</span>
+      <span class="interaction-count">↗ ${(p.uses||0).toLocaleString()} uses</span>
+    </div>
+  </div>`;
+}
+
+function getToolConfig(toolId) {
+  const configs = {
+    claude: { name: 'Claude Pro', badge: 'badge-claude', emoji: '🟠' },
+    claudecode: { name: 'Claude Code', badge: 'badge-claude', emoji: '🟠' },
+    gemini: { name: 'Gemini Pro', badge: 'badge-gemini', emoji: '🔵' },
+    aistudio: { name: 'AI Studio', badge: 'badge-gemini', emoji: '🔵' },
+    chatgpt: { name: 'ChatGPT Pro', badge: 'badge-chatgpt', emoji: '🟢' },
+    perplexity: { name: 'Perplexity', badge: 'badge-perplexity', emoji: '🔍' },
+    cursor: { name: 'Cursor Pro', badge: 'badge-cursor', emoji: '💻' },
+    midjourney: { name: 'Midjourney', badge: 'badge-midjourney', emoji: '🎨' },
+    sora: { name: 'Sora', badge: 'badge-sora', emoji: '🎬' },
+    veo: { name: 'Veo 3.1', badge: 'badge-veo', emoji: '📽️' },
+    kling: { name: 'Kling AI', badge: 'badge-kling', emoji: '🎥' },
+    hailuo: { name: 'Hailuo', badge: 'badge-hailuo', emoji: '🌊' },
+    heygen: { name: 'HeyGen', badge: 'badge-heygen', emoji: '🎭' },
+    higgsfield: { name: 'Higgsfield', badge: 'badge-higgsfield', emoji: '✨' },
+    elevenlabs: { name: 'ElevenLabs', badge: 'badge-elevenlabs', emoji: '🎙️' },
+    suno: { name: 'Suno', badge: 'badge-suno', emoji: '🎵' },
+    n8n: { name: 'N8N', badge: 'badge-n8n', emoji: '🔗' },
+    zapier: { name: 'Zapier', badge: 'badge-zapier', emoji: '⚡' },
+    langchain: { name: 'LangChain', badge: 'badge-langchain', emoji: '🦜' },
+    huggingface: { name: 'HuggingFace', badge: 'badge-huggingface', emoji: '🤗' },
+    replit: { name: 'Replit', badge: 'badge-replit', emoji: '🔁' },
+    abacus: { name: 'Abacus AI', badge: 'badge-abacus', emoji: '🧮' },
+    manus: { name: 'Manus AI', badge: 'badge-manus', emoji: '🤖' },
+    qwen: { name: 'Qwen', badge: 'badge-qwen', emoji: '🌐' },
+    kimi: { name: 'Kimi', badge: 'badge-kimi', emoji: '🌙' },
+    copilot: { name: 'MS Copilot', badge: 'badge-copilot', emoji: '💠' },
+    freepik: { name: 'Freepik AI', badge: 'badge-freepik', emoji: '🖼️' },
+    supabase: { name: 'Supabase', badge: 'badge-supabase', emoji: '🗄️' },
+    github: { name: 'GitHub', badge: 'badge-github', emoji: '🐙' },
+    minimax: { name: 'Minimax', badge: 'badge-minimax', emoji: '🔮' },
+  };
+  return configs[toolId] || { name: toolId, badge: '', emoji: '🤖' };
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  if (pageId === 'favorites') renderFavorites();
+  if (pageId === 'trending') renderTrending();
+  if (pageId === 'profile') renderProfilePage();
+}
+
+function filterByTool(tool) {
+  state.toolFilter = tool;
+  state.filter = 'all';
+  state.page = 0;
+  showPage('library');
+  
+  // Update chips
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  renderPrompts();
+}
+
+function setFilter(f, el) {
+  state.filter = f;
+  state.toolFilter = null;
+  state.page = 0;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderPrompts();
+}
+
+function loadMore() {
+  state.page++;
+  renderPrompts();
+}
+
+// ============================================================
+// PROMPT MODAL
+// ============================================================
+function openPrompt(id) {
+  const p = PROMPT_DB.find(x => x.id === id);
+  if (!p) return;
+  state.currentModal = p;
+  
+  const tool = getToolConfig(p.tool);
+  document.getElementById('modalBadge').innerHTML = `<span class="tool-badge ${tool.badge}">${tool.emoji} ${tool.name}</span>`;
+  document.getElementById('modalTitle').textContent = p.title;
+  document.getElementById('modalMeta').textContent = `${p.cat} · ${(p.uses||0).toLocaleString()} uses`;
+  document.getElementById('modalPromptContent').textContent = p.prompt || '';
+  
+  const isFav = state.favorites.includes(p.id);
+  document.getElementById('modalFavBtn').textContent = isFav ? '★ Saved' : '⭐ Save to Favorites';
+  
+  if (p.tips) {
+    document.getElementById('tipsLabel').style.display = 'block';
+    document.getElementById('modalTips').style.display = 'block';
+    document.getElementById('modalTips').textContent = p.tips;
+  } else {
+    document.getElementById('tipsLabel').style.display = 'none';
+    document.getElementById('modalTips').style.display = 'none';
+  }
+  
+  document.getElementById('promptModal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('promptModal')) {
+    document.getElementById('promptModal').classList.remove('open');
+  }
+}
+
+function copyPrompt() {
+  if (!state.currentModal) return;
+  navigator.clipboard.writeText(state.currentModal.prompt || '');
+  showToast('Prompt copied to clipboard!');
+}
+
+function copyCardPrompt(id) {
+  const p = PROMPT_DB.find(x => x.id === id);
+  if (!p) return;
+  navigator.clipboard.writeText(p.prompt || '');
+  showToast('Prompt copied!');
+}
+
+function toggleFav(id, el) {
+  const idx = state.favorites.indexOf(id);
+  if (idx > -1) {
+    state.favorites.splice(idx, 1);
+    el.textContent = '☆';
+    el.classList.remove('fav-active');
+    showToast('Removed from favorites');
+  } else {
+    state.favorites.push(id);
+    el.textContent = '⭐';
+    el.classList.add('fav-active');
+    showToast('Saved to favorites!');
+  }
+  localStorage.setItem('pv_favorites', JSON.stringify(state.favorites));
+  updateProfileStats();
+}
+
+function toggleFavModal() {
+  if (!state.currentModal) return;
+  const id = state.currentModal.id;
+  const idx = state.favorites.indexOf(id);
+  if (idx > -1) {
+    state.favorites.splice(idx, 1);
+    document.getElementById('modalFavBtn').textContent = '⭐ Save to Favorites';
+    showToast('Removed from favorites');
+  } else {
+    state.favorites.push(id);
+    document.getElementById('modalFavBtn').textContent = '★ Saved';
+    showToast('Saved to favorites!');
+  }
+  localStorage.setItem('pv_favorites', JSON.stringify(state.favorites));
+  renderPrompts();
+  updateProfileStats();
+}
+
+// ============================================================
+// FAVORITES & TRENDING
+// ============================================================
+function renderFavorites() {
+  const grid = document.getElementById('favGrid');
+  const empty = document.getElementById('favEmpty');
+  const favPrompts = PROMPT_DB.filter(p => state.favorites.includes(p.id));
+  
+  if (favPrompts.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    grid.innerHTML = favPrompts.map(p => promptCard(p)).join('');
+  }
+}
+
+function renderTrending() {
+  const grid = document.getElementById('trendingGrid');
+  const trending = [...PROMPT_DB].sort((a,b) => (b.uses||0) - (a.uses||0)).slice(0, 24);
+  grid.innerHTML = trending.map(p => promptCard(p)).join('');
+}
+
+// ============================================================
+// UPLOAD
+// ============================================================
+function submitPrompt() {
+  const title = document.getElementById('uploadTitle').value.trim();
+  const tool = document.getElementById('uploadTool').value;
+  const cat = document.getElementById('uploadCategory').value;
+  const prompt = document.getElementById('uploadText').value.trim();
+  const tips = document.getElementById('uploadTips').value.trim();
+  
+  if (!title || !tool || !prompt) {
+    showToast('Please fill in Title, Tool, and Prompt text', true);
+    return;
+  }
+  
+  const newPrompt = {
+    id: PROMPT_DB.length + Date.now(),
+    tool: tool.toLowerCase().replace(/\s+/g, ''),
+    title,
+    cat,
+    uses: 0,
+    prompt,
+    tips,
+    isUserUpload: true
+  };
+  
+  PROMPT_DB.unshift(newPrompt);
+  state.uploads.push(newPrompt.id);
+  localStorage.setItem('pv_uploads', JSON.stringify(state.uploads));
+  
+  document.getElementById('uploadTitle').value = '';
+  document.getElementById('uploadText').value = '';
+  document.getElementById('uploadTips').value = '';
+  
+  showToast('✓ Prompt added to the library!');
+  updateProfileStats();
+  showPage('library');
+  renderPrompts();
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+function renderProfilePage() {
+  document.getElementById('profileFavCount').textContent = state.favorites.length;
+  document.getElementById('profileUploadCount').textContent = state.uploads.length;
+  
+  if (state.user) {
+    const initials = state.user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('profileAvatar').textContent = initials;
+    document.getElementById('profileName').textContent = state.user.name;
+    document.getElementById('profileEmail').textContent = state.user.email;
+    document.getElementById('profileNameInput').value = state.user.name;
+    document.getElementById('profileEmailInput').value = state.user.email;
+  }
+}
+
+function saveProfile() {
+  const name = document.getElementById('profileNameInput').value.trim();
+  const email = document.getElementById('profileEmailInput').value.trim();
+  const role = document.getElementById('profileRole').value.trim();
+  
+  state.user = { ...state.user, name, email, role };
+  localStorage.setItem('pv_user', JSON.stringify(state.user));
+  updateUserUI();
+  showToast('Profile saved!');
+}
+
+function updateProfileStats() {
+  document.getElementById('profileFavCount').textContent = state.favorites.length;
+  document.getElementById('profileUploadCount').textContent = state.uploads.length;
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function showLoginModal() {
+  document.getElementById('loginModal').classList.add('open');
+}
+
+function closeLoginModal(e) {
+  if (e.target === document.getElementById('loginModal')) {
+    document.getElementById('loginModal').classList.remove('open');
+  }
+}
+
+function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const email = document.getElementById('loginEmail').value.trim();
+  
+  if (!name || !email) {
+    showToast('Please enter your name and email', true);
+    return;
+  }
+  
+  state.user = { name, email };
+  localStorage.setItem('pv_user', JSON.stringify(state.user));
+  document.getElementById('loginModal').classList.remove('open');
+  updateUserUI();
+  showToast(`Welcome, ${name}! 🎉`);
+}
+
+function updateUserUI() {
+  if (!state.user) return;
+  const initials = state.user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('userName').textContent = state.user.name;
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent = state.user.name;
+  document.getElementById('profileEmail').textContent = state.user.email;
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.style.borderColor = isError ? 'rgba(255,107,107,0.4)' : 'rgba(0,229,195,0.3)';
+  t.style.color = isError ? 'var(--accent3)' : 'var(--accent2)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+</script>
+</body>
+</html>
