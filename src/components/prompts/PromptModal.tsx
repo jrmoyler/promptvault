@@ -64,14 +64,14 @@ export default function PromptModal() {
       />
 
       {/* Panel */}
-      <div className="relative bg-surface border border-[rgba(120,100,255,0.2)] rounded-2xl shadow-glow w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
+      <div className="relative bg-surface border border-[rgba(120,100,255,0.2)] rounded-2xl shadow-glow w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
         {/* Header */}
-        <div className="flex items-start gap-4 px-6 pt-6 pb-4 border-b border-[rgba(120,100,255,0.1)]">
+        <div className="flex items-start gap-3 sm:gap-4 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-[rgba(120,100,255,0.1)]">
           <div className="flex-1 min-w-0">
             <Badge toolId={prompt.tool} />
             <h2
               id="modal-title"
-              className="font-display font-bold text-text-primary text-xl mt-2 leading-snug"
+              className="font-display font-bold text-text-primary text-lg sm:text-xl mt-1.5 sm:mt-2 leading-snug"
             >
               {prompt.title}
             </h2>
@@ -95,7 +95,7 @@ export default function PromptModal() {
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4 sm:gap-5">
           {/* Prompt text */}
           <div>
             <div className="text-[10px] uppercase tracking-widest text-muted/60 font-semibold mb-2">
@@ -118,7 +118,7 @@ export default function PromptModal() {
         </div>
 
         {/* Footer actions */}
-        <div className="flex items-center gap-3 px-6 py-4 border-t border-[rgba(120,100,255,0.1)]">
+        <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[rgba(120,100,255,0.1)]">
           <button
             onClick={handleCopy}
             className="flex-1 bg-accent hover:bg-accent/80 text-white font-semibold text-sm py-2.5 rounded-xl transition-all duration-150 cursor-pointer"

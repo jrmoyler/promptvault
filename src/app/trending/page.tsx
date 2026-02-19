@@ -35,7 +35,7 @@ export default function TrendingPage() {
     <main className="flex flex-col min-h-full">
       <TopBar title="Trending" showSearch={false} />
 
-      <div className="px-6 py-6">
+      <div className="px-3 sm:px-6 py-4 sm:py-6">
         {/* Hero label */}
         <div className="mb-6">
           <h2 className="font-display font-bold text-2xl text-text-primary">
@@ -50,11 +50,7 @@ export default function TrendingPage() {
           <div
             role="list"
             aria-label="Trending prompts"
-            className="grid gap-4"
-            style={{
-              gridTemplateColumns:
-                "repeat(auto-fill, minmax(min(100%, 380px), 1fr))",
-            }}
+            className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
           >
             {prompts.map((p, index) => (
               <div key={p.id} role="listitem" className="relative">
