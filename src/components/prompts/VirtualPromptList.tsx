@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import PromptCard from "./PromptCard";
-import { cn } from "@/lib/utils";
 import type { Prompt } from "@/types";
 
 interface VirtualPromptListProps {
@@ -16,10 +16,12 @@ interface VirtualPromptListProps {
   emptyIcon?: string;
 }
 
-// ─── Skeleton card for loading state ─────────────────────────────────────────
+const CARD_ESTIMATED_HEIGHT = 400;
+const ROW_GAP = 16;
+
 function SkeletonCard() {
   return (
-    <div className="bg-surface border border-[rgba(120,100,255,0.08)] rounded-2xl p-5 flex flex-col gap-3 animate-pulse">
+    <div className="bg-surface border border-[rgba(120,100,255,0.08)] rounded-2xl p-5 flex flex-col gap-3 animate-pulse min-h-[360px]">
       <div className="h-5 w-24 bg-surface2 rounded-lg" />
       <div className="h-4 w-full bg-surface2 rounded-lg" />
       <div className="h-4 w-3/4 bg-surface2 rounded-lg" />
@@ -37,35 +39,12 @@ function SkeletonCard() {
   );
 }
 
-// ─── Sentinel div watched by IntersectionObserver ────────────────────────────
-interface SentinelProps {
-  onVisible: () => void;
+function getColumnCount(width: number): number {
+  if (width >= 1280) return 3;
+  if (width >= 640) return 2;
+  return 1;
 }
 
-function LoadMoreSentinel({ onVisible }: SentinelProps) {
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          onVisible();
-        }
-      },
-      { rootMargin: "200px" } // Start loading 200px before sentinel enters view
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [onVisible]);
-
-  return <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />;
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
 export default function VirtualPromptList({
   prompts,
   isLoading,
@@ -76,20 +55,50 @@ export default function VirtualPromptList({
   emptyMessage = "No prompts found",
   emptyIcon = "🔍",
 }: VirtualPromptListProps) {
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [columns, setColumns] = useState(1);
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateColumns = () => setColumns(getColumnCount(element.clientWidth));
+    updateColumns();
+
+    const observer = new ResizeObserver(updateColumns);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const rows = useMemo(() => {
+    const grouped: Prompt[][] = [];
+    for (let i = 0; i < prompts.length; i += columns) {
+      grouped.push(prompts.slice(i, i + columns));
+    }
+    return grouped;
+  }, [prompts, columns]);
+
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: () => CARD_ESTIMATED_HEIGHT + ROW_GAP,
+    overscan: 4,
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+
+  useEffect(() => {
+    const lastRow = virtualRows[virtualRows.length - 1];
+    if (!lastRow) return;
+
+    const isNearEnd = lastRow.index >= rows.length - 3;
+    if (isNearEnd && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [virtualRows, rows.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // ── Loading skeleton (initial load) ────────────────────────────────────────
   if (isLoading) {
     return (
-      <div
-        className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-        aria-busy="true"
-        aria-label="Loading prompts"
-      >
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Loading prompts">
         {Array.from({ length: 12 }, (_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -97,7 +106,6 @@ export default function VirtualPromptList({
     );
   }
 
-  // ── Empty state ─────────────────────────────────────────────────────────────
   if (!isLoading && prompts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -108,39 +116,49 @@ export default function VirtualPromptList({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Result count */}
+    <div ref={containerRef} className="flex flex-col gap-4">
       <p className="text-muted text-xs font-mono px-0.5">
-        Showing{" "}
-        <span className="text-accent font-semibold">{prompts.length.toLocaleString()}</span>
-        {" "}of{" "}
-        <span className="text-text-primary font-semibold">{total.toLocaleString()}</span>{" "}
-        prompts
+        Showing <span className="text-accent font-semibold">{prompts.length.toLocaleString()}</span> of{" "}
+        <span className="text-text-primary font-semibold">{total.toLocaleString()}</span> prompts
       </p>
 
-      {/* Grid — CSS grid handles responsive layout; only rendered cards exist in DOM */}
       <div
         role="list"
         aria-label="Prompt library"
-        className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+        className="relative"
+        style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
       >
-        {prompts.map((p) => (
-          <div key={p.id} role="listitem">
-            <PromptCard prompt={p} />
-          </div>
-        ))}
+        {virtualRows.map((virtualRow) => {
+          const rowPrompts = rows[virtualRow.index] ?? [];
 
-        {/* Inline skeleton cards while fetching next page */}
-        {isFetchingNextPage &&
-          Array.from({ length: 6 }, (_, i) => <SkeletonCard key={`sk-${i}`} />)}
+          return (
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute left-0 top-0 w-full"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 mb-4">
+                {rowPrompts.map((prompt) => (
+                  <div key={prompt.id} role="listitem">
+                    <PromptCard prompt={prompt} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Invisible sentinel triggers next page load automatically */}
-      {hasNextPage && !isFetchingNextPage && (
-        <LoadMoreSentinel onVisible={handleLoadMore} />
+      {isFetchingNextPage && (
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <SkeletonCard key={`sk-${i}`} />
+          ))}
+        </div>
       )}
 
-      {/* End of results */}
       {!hasNextPage && prompts.length > 0 && (
         <p className="text-center text-muted/40 text-xs py-8 font-mono">
           — all {total.toLocaleString()} prompts loaded —

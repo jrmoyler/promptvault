@@ -2,5 +2,13 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "devCommand": "npm run dev",
-  "installCommand": "npm install"
+  "installCommand": "npm ci",
+  "functions": {
+    "src/app/api/prompts/route.ts": {
+      "maxDuration": 10
+    },
+    "src/app/api/prompts/trending/route.ts": {
+      "maxDuration": 10
+    }
+  }
 }

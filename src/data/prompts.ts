@@ -258,15 +258,15 @@ Execution protocol:
 4. Recommend one plan and first 48-hour actions.
 5. End with a single "Do this now" command.
 Output must be decisive, specific, and measurable.`,
-  "meta-prompt": `You are a prompt architect optimizing prompts for [TARGET_MODEL].
-Task: Transform [RAW_PROMPT] into a production-grade version.
+  "meta-prompt": `You are a senior execution specialist for [TARGET_MODEL].
+Task: Solve [RAW_TASK] directly with production-grade quality.
 Steps:
-1. Detect ambiguity, missing constraints, and vague success criteria.
-2. Rewrite with role, task, context, constraints, output format.
-3. Add placeholders for user-fill values in [BRACKETS].
-4. Provide a compact and an expanded version.
-5. Explain why each revision improves reliability.
-Output format: Revised Prompt A, Revised Prompt B, Change Log.`,
+1. Clarify assumptions and missing constraints.
+2. Execute the task with role, context, constraints, and strict output format.
+3. Provide concise result and expanded version when useful.
+4. Explain tradeoffs and confidence level.
+5. End with clear next actions.
+Output format: Final Output, Optional Alternate, Decision Notes.`,
   "workflow": `Design an execution workflow for [PROCESS_NAME] in [DOMAIN].
 Required inputs: [TRIGGER], [SYSTEMS], [APPROVAL_RULES], [SLA].
 Workflow steps:
@@ -276,7 +276,7 @@ Workflow steps:
 4. Failure handling + retry policy.
 5. Monitoring dashboard metrics and alerts.
 Deliverables: numbered flow, pseudo-JSON mapping, and operations checklist.`,
-  "image-gen": `Create an image-generation prompt for [SUBJECT] in [STYLE].
+  "image-gen": `Generate production-ready image instructions for [SUBJECT] in [STYLE].
 Must include:
 - Composition + camera framing
 - Lighting + color palette
@@ -340,7 +340,7 @@ Agent loop:
 4. Retry or branch when failure occurs.
 5. Return final answer + action log.
 Output: system prompt, tool schema, and loop policy.`,
-  "rag": `Build a RAG prompt for answering [QUESTION_TYPE] from [KNOWLEDGE_BASE].
+  "rag": `Answer [QUESTION_TYPE] from [KNOWLEDGE_BASE] using a RAG workflow.
 Instructions:
 1. Retrieve top-k sources with metadata.
 2. Rank source relevance and freshness.
@@ -424,7 +424,7 @@ Response protocol:
 4. Offer workaround if full fix is delayed.
 5. Close with confirmation and follow-up plan.
 Output: customer-facing reply + internal ticket notes.`,
-  "sales": `Create a sales enablement prompt for [PRODUCT] and [PROSPECT_TYPE].
+  "sales": `Create a sales enablement playbook for [PRODUCT] and [PROSPECT_TYPE].
 Required output:
 1. Discovery questions tied to pain points.
 2. Value narrative mapped to business outcomes.
@@ -579,20 +579,88 @@ function generatePrompts(): Prompt[] {
 // ─── Singleton DB ─────────────────────────────────────────────────────────────
 let _db: Prompt[] | null = null;
 
+
+function sanitizeReadyToUsePrompt(text: string): string {
+  return text
+    .replace(/\bprompt architect\b/gi, "execution specialist")
+    .replace(/\bcreate\s+(?:an?\s+)?(?:[\w-]+\s+){0,2}prompt\b/gi, "deliver the final output")
+    .replace(/\bbuild\s+a\s+rag\s+prompt\b/gi, "answer the question using retrieval")
+    .replace(/\bsales enablement prompt\b/gi, "sales enablement playbook")
+    .replace(/Fill all \[BRACKETED\] fields before running\.\n\n/gi, "")
+    .trim();
+}
+
+
+function toExecutionFallback(title: string, category: string): string {
+  return [
+    `You are an expert ${category.replace(/-/g, " ")} specialist.`,
+    `Task: Execute "${title}" immediately and return the finished deliverable.`,
+    "Requirements:",
+    "1. Ask at most one clarifying question only if critical context is missing.",
+    "2. Provide a complete, copy-ready output without asking the user to craft another prompt.",
+    "3. Include concrete specifics, constraints, and a final action checklist.",
+  ].join("\n");
+}
+
+function enforceReadyToUsePrompt(text: string, title: string, category: string): string {
+  const bannedMetaPatterns = [
+    /\b(?:create|generate|write|craft)\b[^\n]{0,80}\bprompt\b/i,
+    /\bprompt\s+architect\b/i,
+    /\boptimi[sz]e\b[^\n]{0,80}\bprompt\b/i,
+    /\bmeta[-\s]?prompt\b/i,
+  ];
+
+  if (bannedMetaPatterns.some((pattern) => pattern.test(text))) {
+    return toExecutionFallback(title, category);
+  }
+
+  return text;
+}
+
 function normalizePromptDB(prompts: Prompt[]): Prompt[] {
   const seen = new Set<number>();
   const normalized: Prompt[] = [];
 
+  const resolvePromptText = (raw: Prompt): string => {
+    const candidate = raw as Prompt & {
+      actualPrompt?: string;
+      actual_prompt?: string;
+      finalPrompt?: string;
+      final_prompt?: string;
+      metaPrompt?: string;
+      meta_prompt?: string;
+      content?: string;
+    };
+
+    return (
+      candidate.actualPrompt ??
+      candidate.actual_prompt ??
+      candidate.finalPrompt ??
+      candidate.final_prompt ??
+      candidate.prompt ??
+      candidate.content ??
+      candidate.metaPrompt ??
+      candidate.meta_prompt ??
+      ""
+    );
+  };
+
   for (const prompt of prompts) {
+    const resolvedPrompt = enforceReadyToUsePrompt(
+      sanitizeReadyToUsePrompt(resolvePromptText(prompt)),
+      prompt.title ?? "Execution Prompt",
+      prompt.cat ?? "content"
+    );
+
     if (!prompt || typeof prompt.id !== "number") continue;
     if (seen.has(prompt.id)) continue;
-    if (!prompt.title?.trim() || !prompt.prompt?.trim()) continue;
+    if (!prompt.title?.trim() || !resolvedPrompt.trim()) continue;
 
     seen.add(prompt.id);
     normalized.push({
       ...prompt,
       title: prompt.title.trim(),
-      prompt: prompt.prompt.trim(),
+      prompt: resolvedPrompt.trim(),
       cat: prompt.cat?.trim() || "content",
       tool: prompt.tool?.trim() || "chatgpt",
       uses: Number.isFinite(prompt.uses) ? prompt.uses : 0,
@@ -611,6 +679,13 @@ export function getPromptDB(): Prompt[] {
     ]);
   }
   return _db;
+}
+
+export function auditPromptReadiness(): { total: number; violations: number } {
+  const bannedMetaPattern = /\b(?:create|generate|write|craft)\b[^\n]{0,80}\bprompt\b/i;
+  const db = getPromptDB();
+  const violations = db.filter((entry) => bannedMetaPattern.test(entry.prompt)).length;
+  return { total: db.length, violations };
 }
 
 export function prependUserPrompts(uploads: Prompt[]): void {
