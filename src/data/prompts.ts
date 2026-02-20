@@ -451,21 +451,91 @@ Deliver a ready-to-write brief and optimization checklist.`,
 };
 
 function buildPromptBody(tool: string, adj: string, domain: string, cat: string, variantIdx: number): string {
-  const catLabel = CAT_LABELS[cat] ?? cat.replace(/-/g, " ");
-  const toolCtx = TOOL_CONTEXT[tool] ?? "Use the tool's strongest native capabilities.";
   const categoryTemplate = CATEGORY_PROMPT_TEMPLATES[cat] ?? CATEGORY_PROMPT_TEMPLATES["meta-prompt"];
   const executionVariant = EXECUTION_VARIANTS[variantIdx % EXECUTION_VARIANTS.length];
 
+  // Fill all bracketed placeholders with concrete values derived from adj/domain/tool
+  // so the generated prompt is immediately usable without manual editing.
+  const personalised = categoryTemplate
+    .replace(/\[DOMAIN_SPECIALTY\]/g, `${adj} ${domain}`)
+    .replace(/\[APPLICATION\]/g, `a ${domain.toLowerCase()} application`)
+    .replace(/\[PRIMARY_OBJECTIVE\]/g, `deliver ${adj.toLowerCase()}, ${domain.toLowerCase()}-grade results`)
+    .replace(/\[POLICY_CONSTRAINTS\]/g, `${domain.toLowerCase()} industry best practices and safety standards`)
+    .replace(/\[MISSION\]/g, `${domain.toLowerCase()} strategic execution`)
+    .replace(/\[CONSTRAINTS\]/g, "time-sensitive, high-stakes environment")
+    .replace(/\[DEADLINE\]/g, "48 hours")
+    .replace(/\[TARGET_MODEL\]/g, tool)
+    .replace(/\[RAW_TASK\]/g, `the ${domain.toLowerCase()} task described below`)
+    .replace(/\[PROCESS_NAME\]/g, `${domain} Pipeline`)
+    .replace(/\[DOMAIN\]/g, domain)
+    .replace(/\[TRIGGER\]/g, "incoming request or scheduled event")
+    .replace(/\[SYSTEMS\]/g, "primary platform, CRM, notification service")
+    .replace(/\[APPROVAL_RULES\]/g, "manager approval for high-value items")
+    .replace(/\[SLA\]/g, "< 4 hours response time")
+    .replace(/\[SUBJECT\]/g, `${domain.toLowerCase()} product`)
+    .replace(/\[STYLE\]/g, "professional editorial")
+    .replace(/\[ASPECT_RATIO\]/g, "16:9")
+    .replace(/\[QUALITY\]/g, "--q 2")
+    .replace(/\[STYLE_FLAG\]/g, "--style raw")
+    .replace(/\[SCENE_CONCEPT\]/g, `${domain.toLowerCase()} brand story`)
+    .replace(/\[PROJECT_TYPE\]/g, `${domain.toLowerCase()} brand audio`)
+    .replace(/\[MOOD\]/g, "inspiring and confident")
+    .replace(/\[GENRE\]/g, "modern cinematic")
+    .replace(/\[TEMPO\]/g, "110 BPM")
+    .replace(/\[INSTRUMENTS\]/g, "piano, strings, subtle synth pad, light percussion")
+    .replace(/\[DURATION\]/g, "60 seconds")
+    .replace(/\[FEATURE\]/g, `${domain.toLowerCase()} feature`)
+    .replace(/\[TECH_STACK\]/g, "TypeScript, React, Node.js")
+    .replace(/\[FILES\]/g, "see attached codebase context")
+    .replace(/\[SECURITY\|PERF\|TIMELINE\]/g, "security-first, optimised for performance, 1-week sprint")
+    .replace(/\[TOPIC\]/g, `${domain.toLowerCase()} trends and best practices`)
+    .replace(/\[TIME_WINDOW\]/g, "last 12 months")
+    .replace(/\[GEOGRAPHY\]/g, "global")
+    .replace(/\[INDUSTRY\]/g, domain)
+    .replace(/\[PLATFORM\]/g, "LinkedIn and Twitter/X")
+    .replace(/\[AUDIENCE\]/g, `${domain.toLowerCase()} professionals`)
+    .replace(/\[OFFER\]/g, `${domain.toLowerCase()} solution`)
+    .replace(/\[ANGLE\]/g, "authority and practical value")
+    .replace(/\[TONE\]/g, "confident, clear, actionable")
+    .replace(/\[CTA\]/g, "start a conversation or book a call")
+    .replace(/\[OBJECTIVE\]/g, `${domain.toLowerCase()} automation`)
+    .replace(/\[TOOLS\]/g, "web_search, code_executor, file_reader, api_caller")
+    .replace(/\[ALLOWED_ACTIONS\]/g, "read, search, compute, summarise")
+    .replace(/\[STOP_CONDITIONS\]/g, "task complete or confidence > 90%")
+    .replace(/\[QUESTION_TYPE\]/g, `${domain.toLowerCase()} questions`)
+    .replace(/\[KNOWLEDGE_BASE\]/g, "the provided documents")
+    .replace(/\[PRODUCT_FLOW\]/g, `${domain.toLowerCase()} user flow`)
+    .replace(/\[USER_PERSONA\]/g, `${domain.toLowerCase()} professional, mid-career`)
+    .replace(/\[JOB_TO_BE_DONE\]/g, `complete a key ${domain.toLowerCase()} workflow efficiently`)
+    .replace(/\[DEVICE\]/g, "desktop and mobile")
+    .replace(/\[ACCESSIBILITY_TARGET\]/g, "WCAG 2.1 AA")
+    .replace(/\[ICP\]/g, `${domain.toLowerCase()} decision-makers`)
+    .replace(/\[BUDGET\]/g, "$5,000/month")
+    .replace(/\[GOAL\]/g, `peak ${domain.toLowerCase()} productivity`)
+    .replace(/\[TIME_HORIZON\]/g, "90 days")
+    .replace(/\[ROLE\]/g, `${adj} ${domain} Expert`)
+    .replace(/\[SCENARIO\]/g, `a high-stakes ${domain.toLowerCase()} strategy session`)
+    .replace(/\[EXPERTISE\]/g, "senior / 10+ years")
+    .replace(/\[VOICE\]/g, "confident and vivid")
+    .replace(/\[POV\]/g, "second person")
+    .replace(/\[LENGTH\]/g, "800-1200 words")
+    .replace(/\[EMOTIONAL_ARC\]/g, "curiosity → tension → resolution")
+    .replace(/\[FORMAT\]/g, `${domain.toLowerCase()} narrative`)
+    .replace(/\[THEME\]/g, `${domain.toLowerCase()} innovation`)
+    .replace(/\[DATASET_DESCRIPTION\]/g, `${domain.toLowerCase()} performance data`)
+    .replace(/\[BUSINESS_QUESTION\]/g, `what are the key ${domain.toLowerCase()} growth drivers`)
+    .replace(/\[SYSTEM_UNDER_TEST\]/g, `${domain.toLowerCase()} application`)
+    .replace(/\[SERVICE\]/g, `${domain.toLowerCase()} platform`)
+    .replace(/\[ISSUE_TYPE\]/g, `${domain.toLowerCase()} support tickets`)
+    .replace(/\[PRODUCT\]/g, `${domain.toLowerCase()} product`)
+    .replace(/\[PROSPECT_TYPE\]/g, `${domain.toLowerCase()} buyers`)
+    .replace(/\[LEARNER_LEVEL\]/g, "intermediate")
+    .replace(/\[KEYWORDS\]/g, `${domain.toLowerCase()} best practices, ${domain.toLowerCase()} strategy`)
+    .replace(/\[COMPANY\/PRODUCT\]/g, `a leading ${domain.toLowerCase()} competitor`);
+
   return [
-    `You are an ${adj.toLowerCase()} ${domain.toLowerCase()} specialist using ${tool}.`,
-    `Tool guidance: ${toolCtx}`,
-    `Category: ${catLabel}`,
+    personalised,
     "",
-    "Fill all [BRACKETED] fields before running.",
-    "",
-    categoryTemplate,
-    "",
-    "Final output requirement: respond with concrete, execution-ready content only.",
     executionVariant,
   ].join("\n");
 }
@@ -586,7 +656,10 @@ function sanitizeReadyToUsePrompt(text: string): string {
     .replace(/\bcreate\s+(?:an?\s+)?(?:[\w-]+\s+){0,2}prompt\b/gi, "deliver the final output")
     .replace(/\bbuild\s+a\s+rag\s+prompt\b/gi, "answer the question using retrieval")
     .replace(/\bsales enablement prompt\b/gi, "sales enablement playbook")
-    .replace(/Fill all \[BRACKETED\] fields before running\.\n\n/gi, "")
+    .replace(/Fill all \[BRACKETED\] fields before running\.\n?\n?/gi, "")
+    .replace(/^Tool guidance:.*\n?/gm, "")
+    .replace(/^Category:.*\n?/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -597,7 +670,7 @@ function toExecutionFallback(title: string, category: string): string {
     `Task: Execute "${title}" immediately and return the finished deliverable.`,
     "Requirements:",
     "1. Ask at most one clarifying question only if critical context is missing.",
-    "2. Provide a complete, copy-ready output without asking the user to craft another prompt.",
+    "2. Provide a complete, copy-ready output — never ask the user to write a follow-up request.",
     "3. Include concrete specifics, constraints, and a final action checklist.",
   ].join("\n");
 }

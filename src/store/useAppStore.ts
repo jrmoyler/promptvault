@@ -121,7 +121,6 @@ export const useAppStore = create<AppStore>()(
           isUserUpload: true,
         };
         set((s) => ({ userUploads: [newPrompt, ...s.userUploads] }));
-        get().showToast("Prompt added to the vault!");
       },
 
       // ── User ────────────────────────────────────────────────────────────────
