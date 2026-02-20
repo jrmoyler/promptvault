@@ -647,44 +647,25 @@ function generatePrompts(): Prompt[] {
 let _db: Prompt[] | null = null;
 
 
-function sanitizeReadyToUsePrompt(text: string): string {
-  return text
-    .replace(/\bprompt architect\b/gi, "execution specialist")
-    .replace(/\bcreate\s+(?:an?\s+)?(?:[\w-]+\s+){0,2}prompt\b/gi, "deliver the final output")
-    .replace(/\bbuild\s+a\s+rag\s+prompt\b/gi, "answer the question using retrieval")
-    .replace(/\bsales enablement prompt\b/gi, "sales enablement playbook")
-    .replace(/Fill all \[BRACKETED\] fields before running\.\n?\n?/gi, "")
-    .replace(/^Tool guidance:.*\n?/gm, "")
-    .replace(/^Category:.*\n?/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
+function extractRenderablePrompt(text: string): string {
+  let trimmed = text.trim();
+  if (!trimmed) return "";
 
-
-function toExecutionFallback(title: string, category: string): string {
-  return [
-    `You are an expert ${category.replace(/-/g, " ")} specialist.`,
-    `Task: Execute "${title}" immediately and return the finished deliverable.`,
-    "Requirements:",
-    "1. Ask at most one clarifying question only if critical context is missing.",
-    "2. Provide a complete, copy-ready output — never ask the user to write a follow-up request.",
-    "3. Include concrete specifics, constraints, and a final action checklist.",
-  ].join("\n");
-}
-
-function enforceReadyToUsePrompt(text: string, title: string, category: string): string {
-  const bannedMetaPatterns = [
-    /\b(?:create|generate|write|craft)\b[^\n]{0,80}\bprompt\b/i,
-    /\bprompt\s+architect\b/i,
-    /\boptimi[sz]e\b[^\n]{0,80}\bprompt\b/i,
-    /\bmeta[-\s]?prompt\b/i,
-  ];
-
-  if (bannedMetaPatterns.some((pattern) => pattern.test(text))) {
-    return toExecutionFallback(title, category);
+  const frontmatterMatch = trimmed.match(/^((?:Expert mode:|Be concise\.|Provide detailed explanation\.|Be creative\.|Maintain professional tone\.)\s*)?---\n[\s\S]*?\n---\n?/i);
+  if (frontmatterMatch) {
+    const prefix = frontmatterMatch[1]?.trim();
+    trimmed = `${prefix ? `${prefix} ` : ""}${trimmed.slice(frontmatterMatch[0].length)}`.trim();
   }
 
-  return text;
+  const promptMatch = trimmed.match(/(?:^|\n)\s*(?:prompt|actual[_\s-]?prompt|final[_\s-]?prompt)\s*:\s*([\s\S]+)/i);
+  if (promptMatch?.[1]) {
+    return promptMatch[1].trim();
+  }
+
+  return trimmed
+    .replace(/^tool guidance:.*\n?/gim, "")
+    .replace(/^category:.*\n?/gim, "")
+    .trim();
 }
 
 function normalizePromptDB(prompts: Prompt[]): Prompt[] {
@@ -716,11 +697,7 @@ function normalizePromptDB(prompts: Prompt[]): Prompt[] {
   };
 
   for (const prompt of prompts) {
-    const resolvedPrompt = enforceReadyToUsePrompt(
-      sanitizeReadyToUsePrompt(resolvePromptText(prompt)),
-      prompt.title ?? "Execution Prompt",
-      prompt.cat ?? "content"
-    );
+    const resolvedPrompt = extractRenderablePrompt(resolvePromptText(prompt));
 
     if (!prompt || typeof prompt.id !== "number") continue;
     if (seen.has(prompt.id)) continue;
