@@ -1,59 +1,76 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { queryPrompts, getTrendingPrompts, PAGE_SIZE } from "@/data/prompts";
-import { useFilter, useFavorites, useUserUploads } from "@/store/useAppStore";
-import { prependUserPrompts } from "@/data/prompts";
-import type { Prompt } from "@/types";
+import { useFilter, useFavorites } from "@/store/useAppStore";
+import type { PaginatedResult, Prompt } from "@/types";
 
-// ─── Infinite-scroll library query ───────────────────────────────────────────
+export const PAGE_SIZE = 24;
+
+async function fetchPromptPage(params: {
+  page: number;
+  search?: string;
+  toolFilter?: string | null;
+  categoryFilter?: string | null;
+  sort?: string;
+  favorites?: number[];
+}): Promise<PaginatedResult> {
+  const query = new URLSearchParams({
+    page: String(params.page),
+    search: params.search ?? "",
+    toolFilter: params.toolFilter ?? "",
+    categoryFilter: params.categoryFilter ?? "",
+    sort: params.sort ?? "most-used",
+    favorites: (params.favorites ?? []).join(","),
+  });
+
+  const res = await fetch(`/api/prompts?${query.toString()}`);
+  if (!res.ok) throw new Error("Failed to load prompts");
+  return res.json();
+}
+
 export function useLibraryPrompts() {
   const filter = useFilter();
   const favorites = useFavorites();
-  const userUploads = useUserUploads();
-
-  // Inject user uploads into the DB before querying
-  if (userUploads.length > 0) {
-    prependUserPrompts(userUploads);
-  }
 
   return useInfiniteQuery({
-    queryKey: ["prompts", filter, favorites.length, userUploads.length],
+    queryKey: ["prompts", filter, favorites],
     queryFn: ({ pageParam = 0 }) =>
-      Promise.resolve(queryPrompts(filter, favorites, pageParam as number)),
-    getNextPageParam: (last) =>
-      last.hasMore ? last.page + 1 : undefined,
+      fetchPromptPage({
+        page: pageParam as number,
+        search: filter.search,
+        toolFilter: filter.toolFilter,
+        categoryFilter: filter.categoryFilter,
+        sort: filter.sort,
+        favorites,
+      }),
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     initialPageParam: 0,
-    staleTime: 1000 * 60 * 5, // 5 min – data is static
+    staleTime: 1000 * 60 * 5,
   });
 }
 
-// ─── Flat array of all loaded prompts ────────────────────────────────────────
 export function useFlatPrompts(
   data: ReturnType<typeof useLibraryPrompts>["data"]
 ): Prompt[] {
-  return useMemo(
-    () => data?.pages.flatMap((p) => p.prompts) ?? [],
-    [data]
-  );
+  return useMemo(() => data?.pages.flatMap((p) => p.prompts) ?? [], [data]);
 }
 
-// ─── Favorites page query ─────────────────────────────────────────────────────
 export function useFavoritePrompts() {
   const filter = useFilter();
   const favorites = useFavorites();
 
   return useInfiniteQuery({
-    queryKey: ["favorites", favorites, filter.search],
+    queryKey: ["favorites", favorites, filter.search, filter.toolFilter, filter.categoryFilter],
     queryFn: ({ pageParam = 0 }) =>
-      Promise.resolve(
-        queryPrompts(
-          { ...filter, sort: "favorites" },
-          favorites,
-          pageParam as number
-        )
-      ),
+      fetchPromptPage({
+        page: pageParam as number,
+        search: filter.search,
+        toolFilter: filter.toolFilter,
+        categoryFilter: filter.categoryFilter,
+        sort: "favorites",
+        favorites,
+      }),
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     initialPageParam: 0,
     enabled: favorites.length > 0,
@@ -61,17 +78,19 @@ export function useFavoritePrompts() {
   });
 }
 
-// ─── Trending prompts (static, no pagination needed) ─────────────────────────
 export function useTrendingPrompts() {
-  return useMemo(() => getTrendingPrompts(), []);
+  return useQuery({
+    queryKey: ["trending-prompts"],
+    queryFn: async () => {
+      const res = await fetch("/api/prompts/trending");
+      if (!res.ok) throw new Error("Failed to load trending prompts");
+      return (await res.json()) as Prompt[];
+    },
+    staleTime: 1000 * 60 * 5,
+    initialData: [],
+  });
 }
 
-// ─── Total count helper ───────────────────────────────────────────────────────
-export function useTotalCount(
-  data: ReturnType<typeof useLibraryPrompts>["data"]
-): number {
-  return data?.pages[0]?.total ?? 0;
+export function useTotalCount(data: { pages?: PaginatedResult[] } | undefined): number {
+  return data?.pages?.[0]?.total ?? 0;
 }
-
-// ─── Page size export ─────────────────────────────────────────────────────────
-export { PAGE_SIZE };

@@ -29,7 +29,7 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 export default function TrendingPage() {
-  const prompts = useTrendingPrompts();
+  const { data: prompts = [], isLoading } = useTrendingPrompts();
 
   return (
     <main className="flex flex-col min-h-full">
@@ -47,18 +47,22 @@ export default function TrendingPage() {
         </div>
 
         <ErrorBoundary>
-          <div
-            role="list"
-            aria-label="Trending prompts"
-            className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
-          >
-            {prompts.map((p, index) => (
-              <div key={p.id} role="listitem" className="relative">
-                <RankBadge rank={index + 1} />
-                <PromptCard prompt={p} />
-              </div>
-            ))}
-          </div>
+          {isLoading ? (
+            <p className="text-muted text-sm">Loading trending prompts…</p>
+          ) : (
+            <div
+              role="list"
+              aria-label="Trending prompts"
+              className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+            >
+              {prompts.map((p, index) => (
+                <div key={p.id} role="listitem" className="relative">
+                  <RankBadge rank={index + 1} />
+                  <PromptCard prompt={p} />
+                </div>
+              ))}
+            </div>
+          )}
         </ErrorBoundary>
       </div>
     </main>
