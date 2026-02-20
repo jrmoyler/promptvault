@@ -583,16 +583,42 @@ function normalizePromptDB(prompts: Prompt[]): Prompt[] {
   const seen = new Set<number>();
   const normalized: Prompt[] = [];
 
+  const resolvePromptText = (raw: Prompt): string => {
+    const candidate = raw as Prompt & {
+      actualPrompt?: string;
+      actual_prompt?: string;
+      finalPrompt?: string;
+      final_prompt?: string;
+      metaPrompt?: string;
+      meta_prompt?: string;
+      content?: string;
+    };
+
+    return (
+      candidate.actualPrompt ??
+      candidate.actual_prompt ??
+      candidate.finalPrompt ??
+      candidate.final_prompt ??
+      candidate.prompt ??
+      candidate.content ??
+      candidate.metaPrompt ??
+      candidate.meta_prompt ??
+      ""
+    );
+  };
+
   for (const prompt of prompts) {
+    const resolvedPrompt = resolvePromptText(prompt);
+
     if (!prompt || typeof prompt.id !== "number") continue;
     if (seen.has(prompt.id)) continue;
-    if (!prompt.title?.trim() || !prompt.prompt?.trim()) continue;
+    if (!prompt.title?.trim() || !resolvedPrompt.trim()) continue;
 
     seen.add(prompt.id);
     normalized.push({
       ...prompt,
       title: prompt.title.trim(),
-      prompt: prompt.prompt.trim(),
+      prompt: resolvedPrompt.trim(),
       cat: prompt.cat?.trim() || "content",
       tool: prompt.tool?.trim() || "chatgpt",
       uses: Number.isFinite(prompt.uses) ? prompt.uses : 0,
