@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn, getToolConfig } from "@/lib/utils";
@@ -27,7 +28,7 @@ export default function Sidebar() {
   const sidebarOpen = useSidebarOpen();
   const closeSidebar = useAppStore((s) => s.closeSidebar);
   const setToolFilter = useAppStore((s) => s.setToolFilter);
-  const totalCount = getPromptDB().length;
+  const totalCount = useMemo(() => getPromptDB().length, []);
 
   const initials = user?.name
     ? user.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()

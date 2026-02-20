@@ -101,7 +101,7 @@ export default function PromptModal() {
             <div className="text-[10px] uppercase tracking-widest text-muted/60 font-semibold mb-2">
               Prompt
             </div>
-            <pre className="font-mono text-sm text-text-primary/90 bg-surface2 border border-[rgba(120,100,255,0.1)] rounded-xl p-4 whitespace-pre-wrap break-words leading-relaxed overflow-auto max-h-60">
+            <pre className="font-mono text-sm text-text-primary/90 bg-surface2 border border-[rgba(120,100,255,0.1)] rounded-xl p-4 whitespace-pre-wrap break-words leading-relaxed overflow-auto max-h-[50vh]">
               {prompt.prompt}
             </pre>
           </div>

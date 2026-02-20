@@ -17,7 +17,7 @@ function ToolFilterBanner() {
   const cfg = getToolConfig(filter.toolFilter);
 
   return (
-    <div className="flex items-center gap-3 mx-3 sm:mx-6 mt-3 sm:mt-4 px-3 sm:px-4 py-2.5 rounded-xl bg-accent/8 border border-accent/20 text-sm">
+    <div className="flex items-center gap-3 mx-3 sm:mx-6 mt-3 sm:mt-4 px-3 sm:px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 text-sm">
       <span className="text-base">{cfg.emoji}</span>
       <span className="text-text-primary font-medium">
         Filtering by: <span className="text-accent">{cfg.name}</span>

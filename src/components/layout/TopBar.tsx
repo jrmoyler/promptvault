@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAppStore, useFilter } from "@/store/useAppStore";
 import { CATEGORIES } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,27 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
   const setSort = useAppStore((s) => s.setSort);
   const setToolFilter = useAppStore((s) => s.setToolFilter);
   const openSidebar = useAppStore((s) => s.openSidebar);
+
+  // Debounced search — show typed value instantly but delay store update
+  const [localSearch, setLocalSearch] = useState(filter.search);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setLocalSearch(value);
+      clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => setSearch(value), 300);
+    },
+    [setSearch]
+  );
+
+  // Sync local state when store search changes externally (e.g. reset filters)
+  useEffect(() => {
+    setLocalSearch(filter.search);
+  }, [filter.search]);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
 
   // ⌘K / Ctrl+K global shortcut
   useEffect(() => {
@@ -62,8 +84,8 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
               ref={searchRef}
               type="text"
               placeholder="Search 5,000+ prompts…"
-              value={filter.search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={localSearch}
+              onChange={(e) => handleSearchChange(e.target.value)}
               aria-label="Search prompts"
               className="w-full bg-surface2 border border-[rgba(120,100,255,0.15)] rounded-xl pl-9 pr-4 sm:pr-16 py-2.5 text-sm text-text-primary placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
             />
@@ -92,13 +114,13 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
         )}
 
         {/* Add Prompt CTA */}
-        <a
+        <Link
           href="/upload"
           className="flex-shrink-0 flex items-center gap-1.5 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 whitespace-nowrap"
         >
           <span className="text-base leading-none">+</span>
           <span className="hidden sm:inline">Add Prompt</span>
-        </a>
+        </Link>
       </div>
 
       {/* ── Mobile sort row (below search on small screens) ─────────────────── */}

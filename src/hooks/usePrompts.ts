@@ -34,7 +34,7 @@ export function useLibraryPrompts() {
   const favorites = useFavorites();
 
   return useInfiniteQuery({
-    queryKey: ["prompts", filter, favorites],
+    queryKey: ["prompts", filter],
     queryFn: ({ pageParam = 0 }) =>
       fetchPromptPage({
         page: pageParam as number,
@@ -87,7 +87,6 @@ export function useTrendingPrompts() {
       return (await res.json()) as Prompt[];
     },
     staleTime: 1000 * 60 * 5,
-    initialData: [],
   });
 }
 
