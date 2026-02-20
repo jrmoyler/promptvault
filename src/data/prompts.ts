@@ -651,9 +651,9 @@ function extractRenderablePrompt(text: string): string {
   let trimmed = text.trim();
   if (!trimmed) return "";
 
-  const frontmatterMatch = trimmed.match(/^(?<prefix>(?:Expert mode:|Be concise\.|Provide detailed explanation\.|Be creative\.|Maintain professional tone\.)\s*)?---\n[\s\S]*?\n---\n?/i);
+  const frontmatterMatch = trimmed.match(/^((?:Expert mode:|Be concise\.|Provide detailed explanation\.|Be creative\.|Maintain professional tone\.)\s*)?---\n[\s\S]*?\n---\n?/i);
   if (frontmatterMatch) {
-    const prefix = frontmatterMatch.groups?.prefix?.trim();
+    const prefix = frontmatterMatch[1]?.trim();
     trimmed = `${prefix ? `${prefix} ` : ""}${trimmed.slice(frontmatterMatch[0].length)}`.trim();
   }
 
