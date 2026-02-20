@@ -1,4 +1,5 @@
 import type { Prompt, FilterState, PaginatedResult } from "@/types";
+import scrapedPrompts from "./scraped_prompts.json";
 
 // ─── Core "hero" prompts ──────────────────────────────────────────────────────
 const HERO_PROMPTS: Prompt[] = [
@@ -32,14 +33,14 @@ const HERO_PROMPTS: Prompt[] = [
   { id: 10, tool: "elevenlabs", title: "Voice Character Bible", cat: "persona", uses: 2299,
     prompt: "Design a complete voice character for ElevenLabs with:\n\n**Personality:** 3 core traits that affect speech patterns\n**Speaking Style:** Pace (WPM), pitch tendency, accent notes\n**Vocabulary:** 10 words/phrases this character uses frequently\n**Emotional Range:** How they sound when excited vs calm vs concerned\n**ElevenLabs Settings:** Stability, Similarity, Style Exaggeration, Speaker Boost recommendations\n\nName the character and write a 50-word sample script to test it.",
     tips: "Think about your brand's personality first. The voice should feel like a natural extension of your brand." },
-  { id: 11, tool: "sora", title: "Cinematic B-Roll Sequence Generator", cat: "video-gen", uses: 2104,
-    prompt: "Generate a cinematic B-roll sequence for Sora:\n\nScene: [DESCRIBE SCENE]\nMood: [cinematic/documentary/dreamy/tense]\nShot types: establish → medium → close-up → detail\nCamera movement: slow push-in, subtle parallax drift\nLighting: golden hour / overcast / neon night\nDuration per shot: 4-6 seconds\nColor grade: [warm/cool/desaturated]\n\nOutput each shot as a separate Sora-optimised prompt.",
+  { id: 11, tool: "sora", title: "Cinematic B-Roll Sequence", cat: "video-gen", uses: 2104,
+    prompt: "Cinematic B-roll sequence of [DESCRIBE SCENE]. Mood: [cinematic/documentary/dreamy/tense]. Shot types: establish → medium → close-up → detail. Camera movement: slow push-in, subtle parallax drift. Lighting: golden hour / overcast / neon night. Duration per shot: 4-6 seconds. Color grade: [warm/cool/desaturated].",
     tips: "Use real-world location references (Times Square, Amalfi Coast) for more photorealistic output." },
   { id: 12, tool: "perplexity", title: "Deep Competitive Intelligence Report", cat: "research", uses: 1987,
     prompt: "Conduct a deep competitive intelligence analysis on [COMPANY/PRODUCT] using Perplexity's real-time search.\n\n1. **Market Position:** Revenue estimates, market share, growth trajectory\n2. **Product Strategy:** Key features, recent releases, roadmap signals\n3. **Go-to-Market:** Pricing, ICP, distribution channels\n4. **Strengths & Moats:** What makes them hard to displace?\n5. **Weaknesses & Gaps:** Where do customers complain? (G2, Reddit, Twitter)\n6. **Recent News:** Last 90 days of significant moves\n7. **Our Opportunity:** Where can we win against them?\n\nCite every claim with a source URL.",
     tips: "Run this with Perplexity Pro for real-time sourcing. Ask follow-up questions to drill into any section." },
-  { id: 13, tool: "suno", title: "Brand Anthem Track Generator", cat: "audio-music", uses: 1654,
-    prompt: "Generate a brand anthem track in Suno:\n\nBrand: [NAME]\nGenre: [epic orchestral/indie pop/lo-fi hip hop/electronic]\nTempo: [BPM]\nKey: [major for uplifting / minor for emotional]\nInstruments: [list 3-5 key instruments]\nMood: [inspirational/energetic/calm/bold]\nDuration: 60 seconds\n\nLyric themes: [brand values in 3 words]\nHook: repeat the brand name [N] times naturally\n\nOutput Suno prompt with style tags and lyric structure.",
+  { id: 13, tool: "suno", title: "Brand Anthem Track", cat: "audio-music", uses: 1654,
+    prompt: "A brand anthem track. Brand: [NAME]. Genre: [epic orchestral/indie pop/lo-fi hip hop/electronic]. Tempo: [BPM]. Key: [major for uplifting / minor for emotional]. Instruments: [list 3-5 key instruments]. Mood: [inspirational/energetic/calm/bold]. Lyric themes: [brand values in 3 words]. Hook: repeat the brand name [N] times naturally.",
     tips: "Keep the lyric brief and hooky. Suno performs best with clear genre and tempo directives." },
   { id: 14, tool: "langchain", title: "ReAct Agent with Tool Calling", cat: "agent", uses: 1823,
     prompt: "Build a LangChain ReAct agent:\n\nGoal: [DESCRIBE GOAL]\nTools: web_search, code_executor, file_reader, api_caller\n\nAgent Loop:\n1. Thought: reason about the current state\n2. Action: select the best tool\n3. Observation: process tool output\n4. Repeat until task complete\n\nSystem prompt: You are a precise, tool-using agent. Always verify results before reporting. If a tool fails, try an alternative approach.\n\nOutput: complete LangChain Python code with error handling and LangSmith tracing.",
@@ -276,30 +277,26 @@ Workflow steps:
 4. Failure handling + retry policy.
 5. Monitoring dashboard metrics and alerts.
 Deliverables: numbered flow, pseudo-JSON mapping, and operations checklist.`,
-  "image-gen": `Generate production-ready image instructions for [SUBJECT] in [STYLE].
-Must include:
-- Composition + camera framing
-- Lighting + color palette
-- Material/texture descriptors
-- Background/environment details
-- Tool parameters: [ASPECT_RATIO], [QUALITY], [STYLE_FLAG]
-Output 3 variants: Photoreal, Editorial, Stylized. Keep each ready to paste.`,
-  "video-gen": `Generate a video prompt package for [SCENE_CONCEPT].
-Provide:
-1. Shot list (establishing → medium → close-up → detail).
-2. Camera movement per shot.
-3. Lighting and mood evolution across timeline.
-4. Motion continuity notes to avoid jump cuts.
-5. Final render settings: duration, fps, aspect ratio, color grade.
-Output as scene-by-scene prompts ready for direct generation.`,
-  "audio-music": `Compose an audio prompt for [PROJECT_TYPE].
-Inputs: [MOOD], [GENRE], [TEMPO], [INSTRUMENTS], [DURATION].
-Instructions:
-1. Define intro/build/drop/outro structure with timestamps.
-2. Specify texture and dynamic energy per section.
-3. Add vocal/voice style notes if needed.
-4. Include mixing direction (space, punch, warmth).
-5. Return final single-line prompt + optional lyric scaffold.`,
+  "image-gen": `[STYLE] image of [SUBJECT].
+Details:
+- Composition: cinematic framing
+- Lighting: professional studio lighting
+- Material/Texture: high fidelity
+- Background: detailed environment
+Parameters: [ASPECT_RATIO] [QUALITY] [STYLE_FLAG]`,
+  "video-gen": `Cinematic video of [SCENE_CONCEPT].
+Visuals:
+- Shot type: medium to close-up
+- Camera movement: smooth tracking
+- Lighting: dynamic and atmospheric
+- Continuity: consistent character and setting
+Settings: high resolution, 24fps`,
+  "audio-music": `[GENRE] track for [PROJECT_TYPE].
+Mood: [MOOD]
+Tempo: [TEMPO]
+Instruments: [INSTRUMENTS]
+Structure: clear intro and outlaw
+Texture: rich and layered`,
   "code-gen": `Act as a senior [DOMAIN_SPECIALTY] engineer delivering production code for [FEATURE].
 Requirements:
 - Stack: [TECH_STACK]
@@ -748,6 +745,7 @@ export function getPromptDB(): Prompt[] {
     _db = normalizePromptDB([
       ...HERO_PROMPTS,
       ...AWESOME_PERSONA_PROMPTS,
+      ...scrapedPrompts as unknown as Prompt[],
       ...generatePrompts(),
     ]);
   }
