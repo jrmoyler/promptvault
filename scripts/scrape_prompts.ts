@@ -89,11 +89,11 @@ interface ScrapedPrompt {
   uses: number;
 }
 
-function parseCSV(text: string): { act: string; prompt: string }[] {
-  const result = [];
+function parseCSV(text: string): { title: string; prompt: string }[] {
+  const result: { title: string; prompt: string }[] = [];
   let currentField = '';
   let inQuotes = false;
-  let fields = [];
+  let fields: string[] = [];
 
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
@@ -111,7 +111,7 @@ function parseCSV(text: string): { act: string; prompt: string }[] {
       if (currentField || fields.length > 0) {
         fields.push(currentField);
         if (fields.length >= 2) {
-           result.push({ act: fields[0], prompt: fields[1] });
+           result.push({ title: fields[0], prompt: fields[1] });
         }
         fields = [];
         currentField = '';
@@ -126,7 +126,7 @@ function parseCSV(text: string): { act: string; prompt: string }[] {
   if (currentField || fields.length > 0) {
       fields.push(currentField);
       if (fields.length >= 2) {
-         result.push({ act: fields[0], prompt: fields[1] });
+         result.push({ title: fields[0], prompt: fields[1] });
       }
   }
   return result;
