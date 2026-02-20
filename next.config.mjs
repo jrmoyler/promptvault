@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   experimental: {
-    optimizePackageImports: ["@tanstack/react-query", "@tanstack/react-virtual"],
+    optimizePackageImports: ["@tanstack/react-query", "@tanstack/react-virtual", "framer-motion"],
   },
 };
 

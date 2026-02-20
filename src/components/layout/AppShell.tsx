@@ -3,6 +3,7 @@
 import Sidebar from "./Sidebar";
 import Toast from "@/components/ui/Toast";
 import PromptModal from "@/components/prompts/PromptModal";
+import CommandPalette from "@/components/ui/CommandPalette";
 import { useAppStore, useSidebarOpen } from "@/store/useAppStore";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -11,10 +12,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-bg text-text-primary">
-      {/* Sidebar — fixed panel on lg+, slide-in drawer on mobile */}
       <Sidebar />
 
-      {/* Mobile backdrop — dims content when drawer is open */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-bg/70 backdrop-blur-sm lg:hidden"
@@ -23,12 +22,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Main content — full width on mobile, offset by sidebar on desktop */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
         {children}
       </div>
 
       <PromptModal />
+      <CommandPalette />
       <Toast />
     </div>
   );

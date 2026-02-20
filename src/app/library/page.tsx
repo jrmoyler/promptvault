@@ -6,7 +6,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useLibraryPrompts, useFlatPrompts, useTotalCount } from "@/hooks/usePrompts";
 import { useAppStore, useFilter } from "@/store/useAppStore";
 import { getToolConfig } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 // ─── Active tool filter banner ────────────────────────────────────────────────
 function ToolFilterBanner() {
@@ -17,7 +16,7 @@ function ToolFilterBanner() {
   const cfg = getToolConfig(filter.toolFilter);
 
   return (
-    <div className="flex items-center gap-3 mx-3 sm:mx-6 mt-3 sm:mt-4 px-3 sm:px-4 py-2.5 rounded-xl bg-accent/10 border border-accent/20 text-sm">
+    <div className="flex items-center gap-3 mx-3 sm:mx-6 mt-3 sm:mt-4 px-3 sm:px-4 py-2.5 rounded-xl bg-accent/8 border border-accent/12 text-sm">
       <span className="text-base">{cfg.emoji}</span>
       <span className="text-text-primary font-medium">
         Filtering by: <span className="text-accent">{cfg.name}</span>
@@ -41,15 +40,15 @@ function StatsStrip({ total }: { total: number }) {
     <div className="grid grid-cols-3 gap-2 sm:gap-3 mx-3 sm:mx-6 mt-4 sm:mt-6 mb-2">
       {[
         { value: totalLabel, label: "Total Prompts", icon: "⚡" },
-        { value: "38",     label: "AI Tools",       icon: "🤖" },
-        { value: "24",     label: "Categories",     icon: "📂" },
+        { value: "38",      label: "AI Tools",      icon: "🤖" },
+        { value: "24",      label: "Categories",    icon: "📂" },
       ].map(({ value, label, icon }) => (
         <div
           key={label}
-          className="bg-surface border border-[rgba(120,100,255,0.1)] rounded-xl px-2 sm:px-4 py-2.5 sm:py-3 text-center"
+          className="bg-surface border border-[rgba(99,102,241,0.08)] rounded-xl px-2 sm:px-4 py-2.5 sm:py-3 text-center"
         >
           <div className="text-lg mb-0.5">{icon}</div>
-          <div className="font-display font-bold text-lg sm:text-xl text-text-primary gradient-text">
+          <div className="font-bold text-lg sm:text-xl text-text-primary gradient-text">
             {value}
           </div>
           <div className="text-muted text-[11px]">{label}</div>

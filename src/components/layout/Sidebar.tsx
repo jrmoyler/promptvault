@@ -37,37 +37,34 @@ export default function Sidebar() {
   function handleToolClick(toolId: string) {
     setToolFilter(toolId);
     router.push("/library");
-    closeSidebar(); // close drawer on mobile after navigation
+    closeSidebar();
   }
 
   function handleNavClick() {
-    closeSidebar(); // close drawer on mobile after navigation
+    closeSidebar();
   }
 
   return (
     <aside
       className={cn(
-        // Base — fixed, full height, same width always
-        "fixed left-0 top-0 h-full w-64 flex flex-col bg-surface border-r border-[rgba(120,100,255,0.12)] z-40 overflow-y-auto",
-        // Mobile: slide in/out with transform; Desktop: always visible
+        "fixed left-0 top-0 h-full w-64 flex flex-col bg-surface/95 backdrop-blur-xl border-r border-[rgba(99,102,241,0.08)] z-40 overflow-y-auto",
         "transition-transform duration-300 ease-in-out",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}
       aria-label="Main navigation"
     >
-      {/* ── Logo + close button row ──────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-[rgba(120,100,255,0.1)]">
-        <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center text-white font-display font-bold text-sm flex-shrink-0 shadow-glow">
+      {/* Logo row */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-[rgba(99,102,241,0.06)]">
+        <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-glow-sm">
           PV
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-display font-bold text-text-primary text-[15px] leading-none">
+          <div className="font-semibold text-text-primary text-[15px] leading-none tracking-tight">
             PromptVault
           </div>
           <div className="text-muted text-[11px] mt-0.5">Team AI Library</div>
         </div>
-        {/* Close button — only visible on mobile */}
         <button
           onClick={closeSidebar}
           aria-label="Close navigation"
@@ -77,7 +74,7 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {/* ── Main nav ─────────────────────────────────────────────────────────── */}
+      {/* Main nav */}
       <nav className="px-3 py-4 flex flex-col gap-0.5">
         {MAIN_NAV.map(({ href, icon, label, badge }) => {
           const isActive =
@@ -90,7 +87,7 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 isActive
-                  ? "bg-accent/15 text-accent border border-accent/20"
+                  ? "bg-accent/10 text-accent border border-accent/15"
                   : "text-muted hover:text-text-primary hover:bg-surface2"
               )}
             >
@@ -99,12 +96,12 @@ export default function Sidebar() {
               </span>
               <span className="flex-1">{label}</span>
               {badge && (
-                <span className="text-[10px] font-mono bg-accent/10 text-accent border border-accent/20 px-1.5 py-0.5 rounded-md">
+                <span className="text-[10px] font-mono bg-accent/8 text-accent border border-accent/15 px-1.5 py-0.5 rounded-md">
                   {totalCount.toLocaleString()}
                 </span>
               )}
               {!badge && label === "My Favorites" && favorites.length > 0 && (
-                <span className="text-[10px] font-mono bg-gold/10 text-gold border border-gold/20 px-1.5 py-0.5 rounded-md">
+                <span className="text-[10px] font-mono bg-gold/8 text-gold border border-gold/15 px-1.5 py-0.5 rounded-md">
                   {favorites.length}
                 </span>
               )}
@@ -113,9 +110,9 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* ── By Tool ──────────────────────────────────────────────────────────── */}
+      {/* By Tool */}
       <div className="px-3 py-2">
-        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted/60 px-3 mb-2">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted/50 px-3 mb-2">
           By Tool
         </div>
         <div className="flex flex-col gap-0.5">
@@ -137,8 +134,8 @@ export default function Sidebar() {
 
       <div className="flex-1" />
 
-      {/* ── User footer ──────────────────────────────────────────────────────── */}
-      <div className="px-4 py-4 border-t border-[rgba(120,100,255,0.1)]">
+      {/* User footer */}
+      <div className="px-4 py-4 border-t border-[rgba(99,102,241,0.06)]">
         <Link href="/profile" onClick={handleNavClick} className="flex items-center gap-3 group">
           <div className="w-8 h-8 rounded-full bg-accent-gradient flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {initials}
