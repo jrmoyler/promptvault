@@ -6,7 +6,7 @@ import { useAppStore, useUser, useFavorites, useUserUploads } from "@/store/useA
 import { cn } from "@/lib/utils";
 
 const INPUT_CLS =
-  "bg-surface2 border border-[rgba(120,100,255,0.15)] rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-muted/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all";
+  "bg-surface2 border border-[rgba(99,102,241,0.10)] rounded-xl px-4 py-2.5 text-sm text-text-primary placeholder:text-muted/40 focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all";
 
 export default function ProfilePage() {
   const user = useUser();
@@ -20,7 +20,6 @@ export default function ProfilePage() {
   const [role, setRole] = useState(user?.role ?? "");
   const [saved, setSaved] = useState(false);
 
-  // Sync if store changes externally
   useEffect(() => {
     if (user) {
       setName(user.name);
@@ -51,12 +50,12 @@ export default function ProfilePage() {
 
       <div className="flex-1 px-3 sm:px-6 py-5 sm:py-8 max-w-2xl w-full mx-auto">
         {/* Avatar + stats */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 bg-surface border border-[rgba(120,100,255,0.12)] rounded-2xl">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent-gradient flex items-center justify-center text-white text-xl sm:text-2xl font-bold font-display flex-shrink-0 shadow-glow">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-6 sm:mb-8 p-4 sm:p-6 bg-surface border border-[rgba(99,102,241,0.08)] rounded-2xl">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-accent-gradient flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0 shadow-glow-sm">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-display font-bold text-xl text-text-primary truncate">
+            <h2 className="font-bold text-xl text-text-primary truncate tracking-tight">
               {name || "Team Member"}
             </h2>
             <p className="text-muted text-sm truncate">{email || "—"}</p>
@@ -64,19 +63,19 @@ export default function ProfilePage() {
           </div>
           <div className="flex gap-6 sm:gap-4 text-center mt-2 sm:mt-0 sm:ml-auto">
             <div>
-              <div className="font-display font-bold text-xl text-gold">{favorites.length}</div>
+              <div className="font-bold text-xl text-gold">{favorites.length}</div>
               <div className="text-muted text-[11px]">Favorites</div>
             </div>
             <div>
-              <div className="font-display font-bold text-xl text-accent2">{uploads.length}</div>
+              <div className="font-bold text-xl text-accent2">{uploads.length}</div>
               <div className="text-muted text-[11px]">Uploads</div>
             </div>
           </div>
         </div>
 
         {/* Edit form */}
-        <div className="bg-surface border border-[rgba(120,100,255,0.12)] rounded-2xl p-6">
-          <h3 className="font-display font-semibold text-lg text-text-primary mb-5">
+        <div className="bg-surface border border-[rgba(99,102,241,0.08)] rounded-2xl p-6">
+          <h3 className="font-semibold text-lg text-text-primary mb-5 tracking-tight">
             Edit Profile
           </h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -125,11 +124,11 @@ export default function ProfilePage() {
                 className={cn(
                   "w-36 font-semibold text-sm py-2.5 rounded-xl transition-all duration-150 cursor-pointer",
                   saved
-                    ? "bg-accent2/20 text-accent2 border border-accent2/30"
-                    : "bg-accent hover:bg-accent/80 text-white"
+                    ? "bg-accent2/15 text-accent2 border border-accent2/25"
+                    : "bg-accent hover:bg-accent-bright text-white"
                 )}
               >
-                {saved ? "✓ Saved" : "Save Changes"}
+                {saved ? "Saved" : "Save Changes"}
               </button>
             </div>
           </form>
@@ -137,15 +136,15 @@ export default function ProfilePage() {
 
         {/* User uploads list */}
         {uploads.length > 0 && (
-          <div className="mt-6 bg-surface border border-[rgba(120,100,255,0.12)] rounded-2xl p-6">
-            <h3 className="font-display font-semibold text-lg text-text-primary mb-4">
+          <div className="mt-6 bg-surface border border-[rgba(99,102,241,0.08)] rounded-2xl p-6">
+            <h3 className="font-semibold text-lg text-text-primary mb-4 tracking-tight">
               My Uploads ({uploads.length})
             </h3>
             <div className="flex flex-col gap-2">
               {uploads.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-surface2 border border-[rgba(120,100,255,0.08)]"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-surface2 border border-[rgba(99,102,241,0.06)]"
                 >
                   <span className="text-accent2 text-sm">✦</span>
                   <span className="text-text-primary text-sm font-medium flex-1 truncate">

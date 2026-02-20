@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppStore, useFilter } from "@/store/useAppStore";
 import { CATEGORIES } from "@/lib/utils";
@@ -14,7 +13,6 @@ interface TopBarProps {
 
 export default function TopBar({ title, showSearch = true }: TopBarProps) {
   const searchRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const filter = useFilter();
   const setSearch = useAppStore((s) => s.setSearch);
   const setCategoryFilter = useAppStore((s) => s.setCategoryFilter);
@@ -22,7 +20,7 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
   const setToolFilter = useAppStore((s) => s.setToolFilter);
   const openSidebar = useAppStore((s) => s.openSidebar);
 
-  // Debounced search — show typed value instantly but delay store update
+  // Debounced search
   const [localSearch, setLocalSearch] = useState(filter.search);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -35,33 +33,24 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
     [setSearch]
   );
 
-  // Sync local state when store search changes externally (e.g. reset filters)
   useEffect(() => {
     setLocalSearch(filter.search);
   }, [filter.search]);
 
-  // Cleanup timer on unmount
   useEffect(() => () => clearTimeout(debounceRef.current), []);
 
-  // ⌘K / Ctrl+K global shortcut
-  useEffect(() => {
-    function handleKeydown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        if (!showSearch) router.push("/library");
-        searchRef.current?.focus();
-      }
-    }
-    window.addEventListener("keydown", handleKeydown);
-    return () => window.removeEventListener("keydown", handleKeydown);
-  }, [router, showSearch]);
+  // Trigger CMD+K palette from search bar click
+  const openPalette = useCallback(() => {
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
+    );
+  }, []);
 
   return (
-    <header className="sticky top-0 z-30 bg-bg/80 backdrop-blur-xl border-b border-[rgba(120,100,255,0.08)]">
-      {/* ── Primary row ─────────────────────────────────────────────────────── */}
+    <header className="sticky top-0 z-30 glass-strong border-b border-[rgba(99,102,241,0.06)]">
+      {/* Primary row */}
       <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 h-14 sm:h-16">
-
-        {/* Hamburger — visible on mobile only */}
+        {/* Hamburger - mobile */}
         <button
           onClick={openSidebar}
           aria-label="Open navigation menu"
@@ -77,35 +66,47 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
         {/* Search input or page title */}
         {showSearch ? (
           <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm pointer-events-none">
-              🔍
-            </span>
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted/50 pointer-events-none"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input
               ref={searchRef}
               type="text"
-              placeholder="Search 5,000+ prompts…"
+              placeholder="Search 5,000+ prompts..."
               value={localSearch}
               onChange={(e) => handleSearchChange(e.target.value)}
               aria-label="Search prompts"
-              className="w-full bg-surface2 border border-[rgba(120,100,255,0.15)] rounded-xl pl-9 pr-4 sm:pr-16 py-2.5 text-sm text-text-primary placeholder:text-muted/60 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+              className="w-full bg-surface2/60 border border-[rgba(99,102,241,0.10)] rounded-xl pl-9 pr-4 sm:pr-16 py-2.5 text-sm text-text-primary placeholder:text-muted/40 focus:outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all"
             />
-            <kbd className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center text-[10px] font-mono text-muted/50 bg-surface px-1.5 py-0.5 rounded border border-[rgba(120,100,255,0.1)]">
-              ⌘K
-            </kbd>
+            <button
+              onClick={openPalette}
+              className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1 text-[10px] font-mono text-muted/40 bg-surface px-1.5 py-0.5 rounded border border-[rgba(99,102,241,0.08)] hover:border-accent/20 hover:text-muted/60 transition-all cursor-pointer"
+            >
+              <span>⌘</span>K
+            </button>
           </div>
         ) : (
-          <h1 className="font-display font-bold text-lg sm:text-xl text-text-primary flex-1">
+          <h1 className="font-semibold text-lg sm:text-xl text-text-primary flex-1 tracking-tight">
             {title}
           </h1>
         )}
 
-        {/* Sort — hidden on smallest screens when searching (filter chip row handles category) */}
+        {/* Sort */}
         {showSearch && (
           <select
             value={filter.sort}
             onChange={(e) => setSort(e.target.value as typeof filter.sort)}
             aria-label="Sort prompts"
-            className="hidden sm:block bg-surface2 border border-[rgba(120,100,255,0.15)] text-text-primary text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-accent/50 transition-all cursor-pointer flex-shrink-0"
+            className="hidden sm:block bg-surface2/60 border border-[rgba(99,102,241,0.10)] text-text-primary text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:border-accent/40 transition-all cursor-pointer flex-shrink-0"
           >
             <option value="most-used">Most Used</option>
             <option value="newest">Newest</option>
@@ -116,21 +117,21 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
         {/* Add Prompt CTA */}
         <Link
           href="/upload"
-          className="flex-shrink-0 flex items-center gap-1.5 bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 whitespace-nowrap"
+          className="flex-shrink-0 flex items-center gap-1.5 bg-accent/8 hover:bg-accent/15 text-accent border border-accent/15 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 whitespace-nowrap"
         >
           <span className="text-base leading-none">+</span>
           <span className="hidden sm:inline">Add Prompt</span>
         </Link>
       </div>
 
-      {/* ── Mobile sort row (below search on small screens) ─────────────────── */}
+      {/* Mobile sort row */}
       {showSearch && (
         <div className="flex sm:hidden items-center gap-2 px-3 pb-2">
           <select
             value={filter.sort}
             onChange={(e) => setSort(e.target.value as typeof filter.sort)}
             aria-label="Sort prompts"
-            className="bg-surface2 border border-[rgba(120,100,255,0.15)] text-text-primary text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-accent/50 transition-all cursor-pointer"
+            className="bg-surface2/60 border border-[rgba(99,102,241,0.10)] text-text-primary text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-accent/40 transition-all cursor-pointer"
           >
             <option value="most-used">Most Used</option>
             <option value="newest">Newest</option>
@@ -139,7 +140,7 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
         </div>
       )}
 
-      {/* ── Category filter chips (library page only) ────────────────────────── */}
+      {/* Category filter chips */}
       {showSearch && (
         <div className="flex items-center gap-2 px-3 sm:px-6 pb-3 overflow-x-auto scrollbar-hide">
           {CATEGORIES.map((cat) => {
@@ -157,8 +158,8 @@ export default function TopBar({ title, showSearch = true }: TopBarProps) {
                 className={cn(
                   "flex-shrink-0 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-medium border transition-all duration-150 cursor-pointer whitespace-nowrap",
                   isActive
-                    ? "bg-accent text-white border-accent shadow-glow"
-                    : "bg-surface2 text-muted border-[rgba(120,100,255,0.15)] hover:text-text-primary hover:border-accent/30"
+                    ? "bg-accent text-white border-accent shadow-glow-sm"
+                    : "bg-surface2/60 text-muted border-[rgba(99,102,241,0.10)] hover:text-text-primary hover:border-accent/25"
                 )}
               >
                 {cat.label}

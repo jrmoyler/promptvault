@@ -5,18 +5,17 @@ import PromptCard from "@/components/prompts/PromptCard";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useTrendingPrompts } from "@/hooks/usePrompts";
 
-// Rank badge colours
 const RANK_COLORS = [
-  "bg-[rgba(240,192,64,0.15)] border-gold/30 text-gold",  // 1 – Gold
-  "bg-[rgba(192,192,192,0.12)] border-white/20 text-white/60", // 2 – Silver
-  "bg-[rgba(205,127,50,0.12)] border-[rgba(205,127,50,0.3)] text-[#cd7f32]", // 3 – Bronze
+  "bg-gold/15 border-gold/30 text-gold",
+  "bg-[rgba(192,192,192,0.10)] border-white/15 text-white/60",
+  "bg-[rgba(205,127,50,0.10)] border-[rgba(205,127,50,0.25)] text-[#cd7f32]",
 ];
 
 function RankBadge({ rank }: { rank: number }) {
   const colorClass =
     rank <= 3
       ? RANK_COLORS[rank - 1]
-      : "bg-surface2 border-[rgba(120,100,255,0.12)] text-muted";
+      : "bg-surface2 border-[rgba(99,102,241,0.10)] text-muted";
 
   return (
     <div
@@ -36,10 +35,9 @@ export default function TrendingPage() {
       <TopBar title="Trending" showSearch={false} />
 
       <div className="px-3 sm:px-6 py-4 sm:py-6">
-        {/* Hero label */}
         <div className="mb-6">
-          <h2 className="font-display font-bold text-2xl text-text-primary">
-            🔥 Most Used Prompts
+          <h2 className="font-bold text-2xl text-text-primary tracking-tight">
+            Most Used Prompts
           </h2>
           <p className="text-muted text-sm mt-1">
             Top 48 prompts ranked by total usage across the team.
@@ -48,17 +46,17 @@ export default function TrendingPage() {
 
         <ErrorBoundary>
           {isLoading ? (
-            <p className="text-muted text-sm">Loading trending prompts…</p>
+            <p className="text-muted text-sm">Loading trending prompts...</p>
           ) : (
             <div
               role="list"
               aria-label="Trending prompts"
-              className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+              className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-6"
             >
               {prompts.map((p, index) => (
                 <div key={p.id} role="listitem" className="relative">
                   <RankBadge rank={index + 1} />
-                  <PromptCard prompt={p} />
+                  <PromptCard prompt={p} index={index} />
                 </div>
               ))}
             </div>
